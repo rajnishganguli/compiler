@@ -1,0 +1,9 @@
+1, =, a, 21
+2, =, b, 13
+3, +, add, a, b
+4, -, sub, a, b
+5, %%, mod, a, b
+6, print, add
+7, print, sub
+8, print, mod
+9, endOfCode

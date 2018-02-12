@@ -1,0 +1,6 @@
+1, =, a, 23
+2, =, b, 11
+3, +, a, a, b
+4, ifgoto, <=, a, 50, 3
+5, print, a
+6, endOfCode

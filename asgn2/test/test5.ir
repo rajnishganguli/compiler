@@ -1,0 +1,11 @@
+1, =, a, 4
+2, =, b, 3
+3, call, foo
+4, print, b
+5, print, a
+6, goto, 11
+7, label, foo
+8,  =, a, 2
+9, print, a
+10, return 
+11, endOfCode
