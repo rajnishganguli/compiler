@@ -11,6 +11,6 @@ python bin/lexer test/test1.R
 -------------------------------------------------------------------------------------------------
 About:
 
-The lexer takes as input the entire test file and produces output on STDOUT, which has structutre below:
+The lexer takes as input the entire test file and produces output on STDOUT, which has structutre below :
 
 Token  	 Occurance 	Lexeme(s)
