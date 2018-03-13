@@ -1,6 +1,6 @@
 .PHONY: clean
 all:
-	cp -rf src/ply bin
+	# cp -rf src/ply bin
 
 	chmod +x src/parser.py
 	cp src/parser.py bin/parser
@@ -10,7 +10,7 @@ all:
 	cp src/derivation.py bin
 	
 clean:
-	rm -rf bin/ply
+	# rm -rf bin/ply
 
 	rm -f bin/*
 	rm -f *.html
