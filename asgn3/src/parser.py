@@ -15,16 +15,17 @@ def p_start_1(p):
 def p_start_2(p):
     '''start : loop_statements'''
 
-############################################################# EXPRESSION STSTEMENTS ########################
+def p_start_3(p):
+    '''start : functions_statements '''    
 
+############################################################# EXPRESSION STATEMENTS ########################
 def p_expression_statements_1(p):
     '''expression_statements : expression start'''
 
 def p_expression_statements_2(p):
     '''expression_statements : expression'''
 
-############################################################# POSSIBLE LOOP STATEMENTS #######################
-
+############################################################# LOOP STATEMENTS #############################
 def p_loop_statements_1(p):
     '''loop_statements : while_loop start'''
     
@@ -45,13 +46,62 @@ def p_for_loop(p):
 def p_while_loop(p):
     '''while_loop : KEYWORD_WHILE BR_LCIR if_cond BR_RCIR compound_statement'''
 
-############################################################# IF CONDITION #########################################
+############################################################# IF CONDITION ###################################
 
 def p_if_cond_1(p):
     '''if_cond :  TYPE_BOOLEAN'''
 
 def p_if_cond_2(p):
     '''if_cond :  comparison_statement'''
+
+
+############################################################# FUNCTION STATEMENTS ############################
+def p_functions_statements_1(p):
+    '''functions_statements : function_definition start '''
+        
+def p_functions_statements_2(p):
+    '''functions_statements : function_definition '''
+        
+def p_functions_statements_3(p):
+    '''functions_statements : function_call start '''
+            
+def p_functions_statements_4(p):
+    '''functions_statements : function_call '''
+
+############################################################## FUNCTION DEFINITION #######################################
+def p_function_definition(p):
+    '''function_definition : IDENTIFIER OP_ASGN KEYWORD_FUNCTION BR_LCIR arg_list BR_RCIR compound_statement'''
+
+def p_arg_list_definition_1(p):
+    '''arg_list : arg_list SEP_COMMA argument'''
+        
+def p_arg_list_definition_2(p):
+    '''arg_list : argument'''
+
+def p_argument_definition_1(p):
+    '''argument : IDENTIFIER OP_ASGN any_type'''
+        
+def p_argument_definition_2(p):
+    '''argument : IDENTIFIER'''
+        
+def p_argument_definition_3(p):
+    '''argument : '''
+
+############################################################### FUNCTION CALLING ###########################
+def p_function_call(p):
+    '''function_call : IDENTIFIER BR_LCIR arg_to_pass BR_RCIR'''
+
+def p_arg_to_pass_1(p):
+    '''arg_to_pass : arg_to_pass SEP_COMMA arg'''
+
+def p_arg_to_pass_2(p):
+    '''arg_to_pass : arg'''
+
+def p_arg(p):
+    '''arg : rightside'''
+
+
+
 
 #######################################################
 
@@ -76,10 +126,13 @@ def p_expression_math_2(p):
 
 def p_expression_math_3(p):
     '''expression : jump_statements'''
-  
-def p_jump_statements(p):
-    '''jump_statements :  KEYWORD_BREAK
-                       | KEYWORD_NEXT'''
+
+############################################################ JUMP STATEMENTS #############################  
+def p_jump_statements_1(p):
+    '''jump_statements :  KEYWORD_BREAK '''
+        
+def p_jump_statements_2(p):
+    '''jump_statements :  KEYWORD_NEXT '''
 
 ########################################################### RIGHTSIDE ######################################
 def p_math_rightside_1(p):
