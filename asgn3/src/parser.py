@@ -16,7 +16,10 @@ def p_start_2(p):
     '''start : loop_statements'''
 
 def p_start_3(p):
-    '''start : functions_statements '''    
+    '''start : functions_statements '''  
+
+def p_start_4(p):
+    '''start : conditional_statements '''      
 
 ############################################################# EXPRESSION STATEMENTS ########################
 def p_expression_statements_1(p):
@@ -100,10 +103,60 @@ def p_arg_to_pass_2(p):
 def p_arg(p):
     '''arg : rightside'''
 
+############################################################## CONDITIONAL STATEMENTS ######################
+def p_conditional_statements_1(p):
+    '''conditional_statements : if_else_statement start '''
+        
+def p_conditional_statements_2(p):
+    '''conditional_statements : if_else_statement '''
+        
+def p_conditional_statements_3(p):
+    '''conditional_statements : if_statement start '''
+        
+def p_conditional_statements_4(p):
+    '''conditional_statements : if_statement'''
 
+########################################################### IF ELSE STATEMENTS ###############################
+def p_if_else_statement_definition_1(p):
+    '''if_else_statement : KEYWORD_IF BR_LCIR if_cond BR_RCIR compound_statement KEYWORD_ELSE if_else_statement '''
+        
+def p_if_else_statement_definition_2(p):
+    '''if_else_statement : KEYWORD_IF BR_LCIR if_cond BR_RCIR compound_statement KEYWORD_ELSE compound_statement '''
 
+def p_if_statement_definition(p):
+    '''if_statement : KEYWORD_IF BR_LCIR if_cond BR_RCIR compound_statement '''
+        
+def p_compound_statement_1(p):
+    '''compound_statement : BR_LCUR statement_list BR_RCUR '''
+        
+def p_compound_statement_2(p):
+    '''compound_statement :  statement '''
+        
+def p_statement_list_1(p):
+    '''statement_list : statement_list statement'''
+        
+def p_statement_list_2(p):
+    '''statement_list : statement'''
+        
+def p_statement_definition_1(p):
+    '''statement : expression'''
+        
+def p_statement_definition_2(p):
+    '''statement : function_call'''
+        
+def p_statement_definition_3(p):
+    '''statement : for_loop'''
+        
+def p_statement_definition_4(p):
+    '''statement : while_loop'''
+        
+def p_statement_definition_5(p):
+    '''statement : if_statement'''
+        
+# def p_statement_definition_6(p):
+#     '''statement : if_else_statement'''
 
-#######################################################
+############################################################# COMPARISON STATEMENTS ########################
 
 def p_comparison_statement_1(p):
     '''comparison_statement :  IDENTIFIER compop any_type '''
@@ -111,10 +164,6 @@ def p_comparison_statement_1(p):
 def p_comparison_statement_2(p):
     '''comparison_statement :  any_type compop any_type'''
 
-############################################################# COMPOUND STATEMENTS ##########################
-
-def p_compound_statement(p):
-    '''compound_statement :  BR_LCUR expression BR_RCUR'''
 
 ############################################################# EXPRESSION TYPES #############################
 
