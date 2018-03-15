@@ -176,6 +176,12 @@ def p_expression_math_2(p):
 def p_expression_math_3(p):
     '''expression : jump_statements'''
 
+def p_expression_math_3(p):
+    '''expression : KEYWORD_RETURN BR_LCIR rightside BR_RCIR  '''
+        
+def p_expression_math_4(p):
+    '''expression : KEYWORD_PRINT BR_LCIR rightside BR_RCIR  '''    
+
 ############################################################ JUMP STATEMENTS #############################  
 def p_jump_statements_1(p):
     '''jump_statements :  KEYWORD_BREAK '''
