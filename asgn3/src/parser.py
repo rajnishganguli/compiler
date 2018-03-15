@@ -57,6 +57,14 @@ def p_if_cond_1(p):
 def p_if_cond_2(p):
     '''if_cond :  comparison_statement'''
 
+def p_if_cond_3(p):
+    '''if_cond : comparison_statement logop if_cond '''
+        
+def p_if_cond_4(p):
+    '''if_cond : comparison_statement bitop if_cond '''
+
+def p_if_cond_5(p):
+    '''if_cond : OP_BITNOT if_cond '''
 
 ############################################################# FUNCTION STATEMENTS ############################
 def p_functions_statements_1(p):
@@ -164,6 +172,19 @@ def p_comparison_statement_1(p):
 def p_comparison_statement_2(p):
     '''comparison_statement :  any_type compop any_type'''
 
+############################################################# LOGICAL OPERATOR #############################
+def p_logop_1(p):
+    '''logop : OP_LOGAND '''
+        
+def p_logop_2(p):
+    '''logop : OP_LOGOR '''
+
+############################################################# BITWISE OPERATOR ##############################
+def p_bitop_1(p):
+    '''bitop : OP_BITAND '''
+        
+def p_bitop_2(p):
+    '''bitop : OP_BITOR '''
 
 ############################################################# EXPRESSION TYPES #############################
 
