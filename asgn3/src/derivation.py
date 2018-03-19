@@ -22,7 +22,7 @@ def make_html(file_name) :
 	fout = open(file_name,'a')
 
 	fout.write("<!DOCTYPE html>\n<html>\n<body>")
-	fout.write("<p><b> start </b> </p>")
+	fout.write("<p><b> program </b> </p>")
 	line1 = fin.readline()
 	if line1 :
 		print "Successfully Parsed"

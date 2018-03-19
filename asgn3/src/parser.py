@@ -8,6 +8,8 @@ from Lexer import tokens
 import re
 import derivation as drv
 
+def p_program(p):
+    '''program : start'''
 ############################################################# POSSIBLE STARTS ###############################
 def p_start_1(p):
     '''start : expression_statements'''
@@ -76,8 +78,8 @@ def p_functions_statements_2(p):
 def p_functions_statements_3(p):
     '''functions_statements : function_call start '''
             
-def p_functions_statements_4(p):
-    '''functions_statements : function_call '''
+# def p_functions_statements_4(p):
+#     '''functions_statements : function_call '''
 
 ############################################################## FUNCTION DEFINITION #######################################
 def p_function_definition(p):
@@ -212,13 +214,46 @@ def p_jump_statements_2(p):
 
 ########################################################### RIGHTSIDE ######################################
 def p_math_rightside_1(p):
-    '''rightside : TYPE_NUMERIC math rightside
-                 | TYPE_INTEGER math rightside   
-                 | IDENTIFIER math rightside'''
+    '''rightside : TYPE_NUMERIC math rightside '''
 
 def p_math_rightside_2(p):
-    '''rightside : vector'''
+    '''rightside : TYPE_INTEGER math rightside '''
+    
+def p_math_rightside_3(p):
+    '''rightside : IDENTIFIER math rightside '''
+        
+def p_math_rightside_4(p):
+    '''rightside : BR_LCIR rightside BR_RCIR '''
+        
+def p_math_rightside_5(p):
+    '''rightside : any_type bitop rightside '''
+        
+def p_math_rightside_6(p):
+    '''rightside : any_type logop rightside '''
 
+def p_math_rightside_8(p):
+    '''rightside : IDENTIFIER bitop rightside '''
+
+def p_math_rightside_9(p):
+    '''rightside : IDENTIFIER logop rightside '''
+
+def p_math_rightside_10(p):
+    '''rightside : IDENTIFIER '''
+
+def p_math_rightside_11(p):
+    '''rightside : any_type '''
+
+def p_math_rightside_12(p):
+    '''rightside : function_call '''
+
+def p_math_rightside_13(p):
+    '''rightside : IDENTIFIER BR_LCSR IDENTIFIER BR_RCSR'''
+
+def p_math_rightside_14(p):
+    '''rightside : IDENTIFIER BR_LCSR TYPE_INTEGER BR_RCSR'''
+
+def p_math_rightside_15(p):
+    '''rightside : IDENTIFIER BR_LCSR KEYWORD_VECTOR_CONSTRUCTOR BR_LCIR arg_to_pass BR_RCIR BR_RCSR'''
 ########################################################### MATH OPERATOR ##################################
 def p_math_1(p):
     '''math : OP_PLUS '''
@@ -276,6 +311,7 @@ def p_comop_definition_4(p):
 ######################################################### ERROR PRODUCTION ##################################
 
 def p_error(p):
+    print p
     print("Syntax error in input!")
 
 # Build the parser
