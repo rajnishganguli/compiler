@@ -171,8 +171,15 @@ def p_statement_definition_5(p):
 def p_comparison_statement_1(p):
     '''comparison_statement :  IDENTIFIER compop any_type '''
 
+def p_comparison_statement_1_1(p):
+    '''comparison_statement :  IDENTIFIER compop IDENTIFIER '''
+
 def p_comparison_statement_2(p):
     '''comparison_statement :  any_type compop any_type'''
+
+def p_comparison_statement_3(p):
+    '''comparison_statement : BR_LCIR if_cond BR_RCIR '''
+
 
 ############################################################# LOGICAL OPERATOR #############################
 def p_logop_1(p):
