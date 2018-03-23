@@ -51,22 +51,6 @@ def p_for_loop(p):
 def p_while_loop(p):
     '''while_loop : KEYWORD_WHILE BR_LCIR if_cond BR_RCIR compound_statement'''
 
-############################################################# IF CONDITION ###################################
-
-def p_if_cond_1(p):
-    '''if_cond :  TYPE_BOOLEAN'''
-
-def p_if_cond_2(p):
-    '''if_cond :  comparison_statement'''
-
-def p_if_cond_3(p):
-    '''if_cond : comparison_statement logop if_cond '''
-        
-def p_if_cond_4(p):
-    '''if_cond : comparison_statement bitop if_cond '''
-
-def p_if_cond_5(p):
-    '''if_cond : OP_BITNOT if_cond '''
 
 ############################################################# FUNCTION STATEMENTS ############################
 def p_functions_statements_1(p):
@@ -150,10 +134,7 @@ def p_statement_list_2(p):
         
 def p_statement_definition_1(p):
     '''statement : expression'''
-        
-def p_statement_definition_2(p):
-    '''statement : function_call'''
-        
+                
 def p_statement_definition_3(p):
     '''statement : for_loop'''
         
@@ -162,9 +143,6 @@ def p_statement_definition_4(p):
         
 def p_statement_definition_5(p):
     '''statement : if_statement'''
-        
-# def p_statement_definition_6(p):
-#     '''statement : if_else_statement'''
 
 ############################################################# COMPARISON STATEMENTS ########################
 
@@ -180,6 +158,23 @@ def p_comparison_statement_2(p):
 def p_comparison_statement_3(p):
     '''comparison_statement : BR_LCIR if_cond BR_RCIR '''
 
+
+############################################################# IF CONDITION ###################################
+
+def p_if_cond_1(p):
+    '''if_cond :  TYPE_BOOLEAN'''
+
+def p_if_cond_2(p):
+    '''if_cond :  comparison_statement'''
+
+def p_if_cond_3(p):
+    '''if_cond : comparison_statement logop if_cond '''
+        
+def p_if_cond_4(p):
+    '''if_cond : comparison_statement bitop if_cond '''
+
+def p_if_cond_5(p):
+    '''if_cond : OP_BITNOT if_cond '''
 
 ############################################################# LOGICAL OPERATOR #############################
 def p_logop_1(p):
@@ -261,7 +256,12 @@ def p_math_rightside_14(p):
 
 def p_math_rightside_15(p):
     '''rightside : IDENTIFIER BR_LCSR KEYWORD_VECTOR_CONSTRUCTOR BR_LCIR arg_to_pass BR_RCIR BR_RCSR'''
+
+def p_math_rightside_16(p):
+    '''rightside : vector_definition'''
+
 ########################################################### MATH OPERATOR ##################################
+
 def p_math_1(p):
     '''math : OP_PLUS '''
         
@@ -283,12 +283,19 @@ def p_math_6(p):
 ########################################################### VECTOR #########################################
 
 def p_vector_1(p):
-    '''vector : any_type'''
+    '''vector_definition : TYPE_NUMERIC SEP_COLON TYPE_NUMERIC'''
 
 def p_vector_2(p):
-    '''vector : TYPE_NUMERIC SEP_COLON TYPE_NUMERIC'''
+    '''vector_definition : KEYWORD_VECTOR BR_LCIR SEP_COMMA TYPE_INTEGER BR_RCIR'''
+    
+def p_vector_3(p):
+    '''vector_definition : KEYWORD_VECTOR BR_LCIR SEP_COMMA IDENTIFIER BR_RCIR'''
+    
+def p_vector_4(p):
+    '''vector_definition : KEYWORD_VECTOR_CONSTRUCTOR BR_LCIR arg_to_pass BR_RCIR'''
 
 ########################################################## ANY_TYPE ########################################
+
 def p_any_type_1(p):
     '''any_type : TYPE_NUMERIC'''
 
@@ -314,6 +321,12 @@ def p_comop_definition_3(p):
     
 def p_comop_definition_4(p):
     '''compop : OP_GREQ'''
+
+def p_comop_definition_5(p):
+    '''compop : OP_NOEQ'''
+
+def p_comop_definition_6(p):
+    '''compop : OP_COMP'''
  
 ######################################################### ERROR PRODUCTION ##################################
 
