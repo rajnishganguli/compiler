@@ -536,6 +536,7 @@ def p_math_rightside_9(p):
 def p_math_rightside_10(p):
     '''rightside : IDENTIFIER'''
     var_dict = ST.varlookup(p[1])
+    # print var_dict
     if(var_dict == False):
         var_dict = globalST.varlookup(p[1])
         if (var_dict == False):
