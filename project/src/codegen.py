@@ -26,77 +26,41 @@ def integer(number):
 		else:
 			return 0
 
-def getreg(var, lineno):
-	# print 'before getreg'
-	# print '\n'
-	# print reg
+def getReg(var, lineno):
+	# print registerDescriptor
 	global asmout
-	l = []
-	temp = []
-	temp_var = []
-	flag = 0
-	index= 0
 	if var in registerDescriptor.values():
 		for register in registerDescriptor.keys():
 			if registerDescriptor[register] == var:
 				return register
-
 	for register in registerDescriptor.keys():
 		if registerDescriptor[register] == None:
 			return register	
 
-	for i in range(0,len(fs_table)):
-		for j in range(0,len(fs_table[i])):
-			if int(fs_table[i][j][0]) == int(lineno):
-				index = i
-				flag = 1
-				break
-		if flag == 1:
-			break
-	
-	#print reg.values()
-	#print fs_table
+	instrvardict = nextuseTable[lineno-1]
+	farthestnextuse = max(instrvardict.keys())
+	# print instrvardict
+	# print farthestnextuse
+	for var in instrvardict:
+		if instrvardict[var] == farthestnextuse:
+			break;
+	for regspill in registerDescriptor.keys():
+		if registerDescriptor[regspill] == var:
+			break;
+	# print var
+	asmout = asmout + "movl " + regspill + ", " + var + "\n"
+	return regspill
 
-	for variable in registerDescriptor.values():
-		for i in range(0,len(fs_table[index])):
-				if (int(fs_table[index][i][0]) > int(lineno)):
-							
+def getlocation(var):
+	return addressDescriptor[var]
 
-					if fs_table[index][i][1] == variable:
-						l.append(int(fs_table[index][i][3]))
-						temp_var.append(fs_table[index][i][1])
-	temp = [x for x in registerDescriptor.values() if x not in temp_var]			
-	
-	for key in registerDescriptor.keys():
-		if temp:
-			if reg[key] in temp:
-				reg_spil = key 
-		else:
-			variable = fs_table[index][max(l)][1]
-			if reg[key] == variable:
-				reg_spil = key
+def setlocation(var, loc):
+	addressDescriptor[var] = loc
 
-			
-	asmout = asmout + "\t movl " + reg_spil + ", " + var + "\n"
-	#print asmout
-	# print 'after getreg'
-	# print '\n'
-	# print reg
-	return reg_spil
+def nextuse(var, line):
+	return nextuseTable[line-1][var]
 
-def freereg(register_name):
-	# global asmout
-	# print 'before freereg'
-	# print '\n'
-	# print reg
-	if (reg[register_name] != None) :
-		asmout = "\t movl " + str(register_name) + " , "+ str(reg[register_name]) + "\n"
-		reg[register_name]= "Memory"
-		reg[register_name]=None
-	# print 'before freereg'
-	# print '\n'
-	# print reg
-	return asmout
+
 def prodAsm(instruction):
 		global asmout
 		asmout="" # final output of the assembly language
