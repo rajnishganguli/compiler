@@ -8,14 +8,18 @@ if len(sys.argv) == 2:
 else:
 	print("usage: python codegen.py irfile")
 	exit()
-	
-reg={'%eax': None, '%edi': None, '%ebx': None, '%esi': None, '%ecx': None, '%edx': None}
-regalwaysinuse={'%esp':None,"%ebp":None}
 
-operators = ['+','-','*','/','=','==','<=','>=','>','<',"%%","&&","||",'&','|',"!=",'!',"ifgoto","goto","call","return","label","print","endOfCode"]
-var_list=[]		# description of variables in the intermediate code - input provided
-global asmout #final output of the assembly language
+reg = ['%eax','%ebx','%ecx', '%edx']
+registerDescriptor={}
+registerDescriptor = registerDescriptor.fromkeys(reg)
+regalwaysinuse={'%esp':None,"%ebp":None}
+addressDescriptor = {}
+operators = ['+','-','*','/','=','==','<=','>=','>','<','%',"&&","||",'&','|',"!=",'!',"ifgoto","goto","call","return","label","print","endOfCode","function","funcarg","param"]
+varlist=[]
+
+global asmout
 asmout = ""
+
 def integer(number):
 		if number.isdigit() or (number[1:].isdigit() and (number[0] == "-" or number[0] == "+")):
 			return 1
@@ -32,13 +36,13 @@ def getreg(var, lineno):
 	temp_var = []
 	flag = 0
 	index= 0
-	if var in reg.values():
-		for register in reg.keys():
-			if reg[register] == var:
+	if var in registerDescriptor.values():
+		for register in registerDescriptor.keys():
+			if registerDescriptor[register] == var:
 				return register
 
-	for register in reg.keys():
-		if reg[register] == None:
+	for register in registerDescriptor.keys():
+		if registerDescriptor[register] == None:
 			return register	
 
 	for i in range(0,len(fs_table)):
@@ -53,7 +57,7 @@ def getreg(var, lineno):
 	#print reg.values()
 	#print fs_table
 
-	for variable in reg.values():
+	for variable in registerDescriptor.values():
 		for i in range(0,len(fs_table[index])):
 				if (int(fs_table[index][i][0]) > int(lineno)):
 							
@@ -61,9 +65,9 @@ def getreg(var, lineno):
 					if fs_table[index][i][1] == variable:
 						l.append(int(fs_table[index][i][3]))
 						temp_var.append(fs_table[index][i][1])
-	temp = [x for x in reg.values() if x not in temp_var]			
+	temp = [x for x in registerDescriptor.values() if x not in temp_var]			
 	
-	for key in reg.keys():
+	for key in registerDescriptor.keys():
 		if temp:
 			if reg[key] in temp:
 				reg_spil = key 
@@ -288,16 +292,16 @@ def prodAsm(instruction):
 				dest = instruction[2]
 				src = instruction[3]
 				destreg=getreg(dest,instruction[0])
-				reg[destreg]= dest
+				registerDescriptor[destreg]= dest
 				if integer(src):
 				   	asmout = asmout + "\t movl $"+ src +" , " + destreg +'\n'
-				   	reg[destreg]=src
+				   	registerDescriptor[destreg]=src
 				else:
 				   	asmout = asmout + "\t movl "+ src+" , "+destreg+'\n'
-				   	reg[destreg]=src
+				   	registerDescriptor[destreg]=src
 
 				asmout = asmout + "\t movl " + destreg + " , "+ dest +'\n'
-				reg[destreg]=dest
+				registerDescriptor[destreg]=dest
 
 
 
@@ -550,162 +554,117 @@ def Input_Data() :
 	return matrix
 
 data = Input_Data()
-
-des_var_list = []
-src_var_list = []
-
-for i in range(0,len(data)):
-	if data[i][1] == "ifgoto":
-		l= []
-		l.append(data[i][4])
-		src_var_list = src_var_list + l
-	elif data[i][1] in ['print','call','label','return','goto']:
-		continue
-	elif data[i][1] not in ['call','label','return','goto']:
-		src_var_list = src_var_list + data[i][3:]
-
-src_var_list = list(set(src_var_list))
+nextuseTable = [None for i in range(len(data))]
+# print nextuseTable
 
 for i in range(0,len(data)):
-	if data[i][1] == "ifgoto":
-		l = []
-		l.append(data[i][3])
-		des_var_list = des_var_list + l
-	elif data[i][1] == "print":
-		des_var_list.append(data[i][2])
-	elif data[i][1] in ['call','label','return','endOfCode','goto']:
-		continue
-	elif data[i][1] not in ['call','label','return','endOfCode','goto']:
-		des_var_list.append(data[i][2])
+	if data[i][1] not in ['call','label','return','endOfCode','goto','ifgoto','print','function','param','funcarg']:
+		varlist = varlist + data[i]
 
-des_var_list = list(set(des_var_list))
+varlist = list(set(varlist))
+varlist = [x for x in varlist if not integer(x)]
+for word in operators:
+	if word in varlist:
+		varlist.remove(word)
+# print varlist
 
-var_list = list(set(src_var_list + des_var_list))
+addressDescriptor = addressDescriptor.fromkeys(varlist, "mem")
+symbolTable = addressDescriptor.fromkeys(varlist, ["live", None])
 
-var_list = [x for x in var_list if not integer(x)]
+
 
 leaders = [1,]
 for i in range(0,len(data)):
 	if data[i][1] == "ifgoto":
-		leaders.append(int(data[i][0]))
-		leaders.append(int(data[i][len(data[i])-1]))
+		leaders.append(int(data[i][0])+1)
+		if(data[i][len(data[i])-1].startswith('l')):
+			for j in range(0,len(data)):
+				if data[i][len(data[i])-1] in data[j]:
+					leaders.append(int(data[j][0]))
+		else:
+			leaders.append(int(data[i][len(data[i])-1]))
+		
 	if data[i][1] == "goto":
-		leaders.append(int(data[i][0]))
-		leaders.append(int(data[i][len(data[i])-1]))
+		leaders.append(int(data[i][0])+1)
+		if(data[i][len(data[i])-1].startswith('l')):
+			for j in range(0,len(data)):
+				if data[i][len(data[i])-1] in data[j]:
+					leaders.append(int(data[j][0]))
+		else:
+			leaders.append(int(data[i][len(data[i])-1]))
+		# leaders.append(int(data[i][len(data[i])-1]))
 	if data[i][1] == "label":
+		leaders.append(int(data[i][0]))	
+	if data[i][1] == "function":
 		leaders.append(int(data[i][0]))
-leaders.append(len(data))
+leaders = list(set(leaders))
 leaders.sort()
-
-B_Block = [[] for x in range(len(leaders)-1)]
-node_block=[[] for x in range(len(leaders)-1)]
-
-for i in range(0,len(leaders)-1):
-	for j in range(leaders[i],leaders[i+1]):
-		B_Block[i].append(data[j-1])
-		node_block[i].append(data[j-1][0])
-
-B_Block[len(leaders)-2].append(data[len(data)-1])
-node_block[len(leaders)-2].append(data[len(data)-1][0])
-
 # print leaders
-# print B_Block
-# print node_block
 
-fs_table = []	
+BasicBlocks = []
+i = 0
+while i < len(leaders)-1:
+	BasicBlocks.append(list(range(leaders[i],leaders[i+1])))
+	i = i + 1
+BasicBlocks.append(list(range(leaders[i],len(data)+1)))
+# print BasicBlocks
+for BasicBlock in BasicBlocks:
+	revData = BasicBlock[:]
+	revData.reverse()
+	for instrnumber in revData:
+		instr = data[instrnumber-1]
+		operator = instr[1]
+		variables = [x for x in instr if x in varlist]
+		nextuseTable[instrnumber-1] = {var:symbolTable[var] for var in varlist}
+		if operator in ['+','-','*','/','%']:
+			z = instr[2]
+			x = instr[3]
+			y = instr[4]
+			if z in variables:
+				symbolTable[z] = ["dead", None]
+			if x in variables:
+				symbolTable[x] = ["live", instrnumber]
+			if y in variables:
+				symbolTable[y] = ["live", instrnumber]
+		elif operator == "ifgoto":
+			x = instr[3]
+			y = instr[4]
+			if x in variables:
+				symbolTable[x] = ["live", instrnumber]
+			if y in variables:
+				symbolTable[y] = ["live", instrnumber]
+		elif operator == "print":
+			x = instr[2]
+			if x in variables:
+				symbolTable[x] = ["live", instrnumber]			
+		elif operator == "=":
+			x = instr[2]
+			y = instr[3]
+			if x in variables:
+				symbolTable[x] = ["dead", None]
+			if y in variables:
+				symbolTable[y] = ["live", instrnumber]
 
-for i in range(0,len(B_Block)):
-	Symbol_Table = [[],[],[],[]]
-	rev_data = B_Block[i]
-	rev_data.reverse()
-	for i in range(0,len(rev_data)):
-		if rev_data[i][1]  in ['=','+','-','*','/','%%']:
-			if rev_data[i][2] not in Symbol_Table[1]:
-				Symbol_Table[0].append(rev_data[i][0])
-				Symbol_Table[1].append(rev_data[i][2])
-				Symbol_Table[2].append("dead")
-				Symbol_Table[3].append("None")
-			else:
-				values = np.array(Symbol_Table[1])
-				searchval = rev_data[i][2]
-				li =  np.where(values == searchval)[0]
-				index = li[(len(li)-1)]
-				Symbol_Table[0].append(rev_data[i][0])
-				Symbol_Table[1].append(rev_data[i][2])
-				Symbol_Table[2].append("dead")
-				Symbol_Table[3].append(Symbol_Table[3][index])
-			for j in range (3,len(rev_data[i])):
-				if rev_data[i][j] in src_var_list:
-					Symbol_Table[0].append(rev_data[i][0])
-					Symbol_Table[1].append(rev_data[i][j])
-					Symbol_Table[2].append("live")
-					Symbol_Table[3].append(rev_data[i][0])
-		elif rev_data[i][1] == "ifgoto":
-			if rev_data[i][3] not in Symbol_Table[1]:
-				Symbol_Table[0].append(rev_data[i][0])
-				Symbol_Table[1].append(rev_data[i][3])
-				Symbol_Table[2].append("dead")
-				Symbol_Table[3].append("None")
-			else:
-				values = np.array(Symbol_Table[1])
-				searchval = rev_data[i][3]
-				li =  np.where(values == searchval)[0]
-				index = li[(len(li)-1)]
-				Symbol_Table[0].append(rev_data[i][0])
-				Symbol_Table[1].append(rev_data[i][3])
-				Symbol_Table[2].append("dead")
-				Symbol_Table[3].append(Symbol_Table[3][index])
-			if rev_data[i][4] in src_var_list:
-				Symbol_Table[0].append(rev_data[i][0])
-				Symbol_Table[1].append(rev_data[i][4])
-				Symbol_Table[2].append("live")
-				Symbol_Table[3].append(rev_data[i][0])
-		elif rev_data[i][1] == "print":
-			Symbol_Table[0].append(rev_data[i][0])
-			Symbol_Table[1].append(rev_data[i][2])
-			Symbol_Table[2].append("live")
-			Symbol_Table[3].append(rev_data[i][0])
-		elif rev_data[i][1] == "return":
-			continue
-	s_table = [[] for x in range(len(Symbol_Table[1]))]
-	
-	for j in range(0,len(Symbol_Table[1])):
-		for i in range(0,4):
-			s_table[j].append(Symbol_Table[i][j])
-	
-	# print Symbol_Table
-	# print s_table
-	#print "\n"
-	fs_table.append(s_table)
-	# print '\n'
-	# print fs_table
-# print fs_table
-
+##################################################################################
 data_section = ".section .data\n"
-for var in var_list:
+for var in varlist:
 	data_section = data_section + var + ":\t" + ".int 0\n"
 data_section = data_section +'\n'
 	#bss_section = ".section .bss\n\n"
-text_section = ".section .text\n\n" + "inptstr: .asciz \"%d\" \n " + "prtsrt:  .asciz \"%d\\n\" \n .globl main\n\n" +  "main:\n"
+text_section = ".section .text\n\n" + "inptstr: .asciz \"%d\" \n" + "prtsrt:  .asciz \"%d\\n\" \n.globl main\n\n" +  "main:\n"
 
-for node in node_block:
-	#print "***",node
-	if node:
-		text_section = text_section + "Loop" + str(node[0]) + ":\n"
-		for i in node:
-		#print i
-		#print data[int(i)-1][0]
-		#print node
-		
+for BasicBlock in BasicBlocks:
+	if BasicBlock:
+		text_section = text_section + "Loop" + str(BasicBlock[0]) + ":\n"
+		for i in BasicBlock:		
 			prodAsm(data[int(i)-1])
 			text_section = text_section + asmout
 
+#--------------------------------------------------------------------------------------------------
 # Priniting the final output
-# print("Assembly Code (x86) for: [" + filename + "]")
-assemblycode = data_section + text_section
-print(assemblycode) 
-
-# Save the x86 code in a file here as out.s
-# outputfile = open('out.s', 'w+')
-# outputfile.write(assemblycode)
-# outputfile.close()
+# print("asmout Code (x86) for: [" + filename + "]")
+# print("--------------------------------------------------------------------")
+asmoutcode = data_section + text_section
+# print nextuseTable
+print(asmoutcode) 
+# print("--------------------------------------------------------------------")
