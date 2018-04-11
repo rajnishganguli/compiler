@@ -252,170 +252,178 @@ def prodAsm(instruction):
 
 			
 		elif operator == "=":
-
-				dest = instruction[2]
-				src = instruction[3]
-				destreg=getreg(dest,instruction[0])
-				registerDescriptor[destreg]= dest
-				if integer(src):
-				   	asmout = asmout + "\t movl $"+ src +" , " + destreg +'\n'
-				   	registerDescriptor[destreg]=src
+			dest = instruction[2]
+			src = instruction[3]
+			location1 = getlocation(dest)
+			if integer(src):
+				if location1 == "mem":
+					asmout = asmout + "movl $" + src + ", " + dest + "\n"
 				else:
-				   	asmout = asmout + "\t movl "+ src+" , "+destreg+'\n'
-				   	registerDescriptor[destreg]=src
+					asmout = asmout + "movl $" + src + ", " + location1 + "\n"
+			else:
+				location2 = getlocation(src)
+				if location1 == "mem" and location2 == "mem":				
+					destreg = getReg(dest, lineNo)
+					asmout = asmout + "movl " + src + ", " + destreg + "\n"
+					registerDescriptor[destreg] = dest
+					setlocation(dest, destreg)			
+				elif location1 == "mem" and location2 != "mem":
+					destreg = getReg(dest, lineNo)
+					asmout = asmout + "movl " + location2 + ", " + destreg + "\n"
+					registerDescriptor[destreg] = dest
+					setlocation(dest, destreg)
+				elif location1 != "mem" and location2 == "mem":
+					asmout = asmout + "movl " + src + ", " + location1 + "\n"
+				elif location1 != "mem" and location2 != "mem":
+					asmout = asmout + "movl " + location2 + ", " + location1 + "\n"
 
-				asmout = asmout + "\t movl " + destreg + " , "+ dest +'\n'
-				registerDescriptor[destreg]=dest
+	   #      elif operator == "ifgoto":
 
-
-
-	        elif operator == "ifgoto":
-
-		        	operatorin = instruction[2]
+		  #       	operatorin = instruction[2]
 				
 
 
-				if operatorin =="==" or operatorin==">=" or operatorin == "<=" or operatorin == ">" or operatorin == "<" or operatorin == "!=":
-				   operand1 = instruction[3]
-				   operand2 = instruction[4]
-				   gotoloc = instruction[5]
-				   if integer(operand1) and integer(operand2):
-				   	destreg=getreg(operand1,instruction[0])
-				   	asmout = asmout + "\t movl $" + operand1 + ", " + destreg + "\n"
-				   	#reg[destreg]=int(operand1)
-				   	asmout= asmout + "\t cmpl $" + operand2 +", " + destreg + "\n"
-				   	reg[destreg]=operand1
-				   elif not integer(operand1) and not integer(operand2):
-				   	destreg=getreg(operand1,instruction[0])
-				   	#regop1 = getreg(operand1)
-				   	regop2 = getreg(operand2,instruction[0])
-				   	reg[regop2]=operand2
-				   	asmout = asmout + "\t movl " + operand1 + "," + destreg+ "\n"
-				   	reg[destreg]=operand1
-				   	asmout = asmout + "\t movl " + operand2 + "," + regop2 + "\n"
-				   	asmout = asmout + "\t cmpl " + regop2 + "," + destreg + "\n"
-				   	reg[destreg]= operand1 
-				   elif not integer(operand1) and integer(operand2):
-				   	destreg=getreg(operand1,instruction[0])
-				   	asmout = asmout + "\t movl " + operand1 + "," + destreg+ "\n"
-				   	reg[destreg]=operand1
-				   	asmout = asmout + "\t cmpl $" + operand2 + "," + destreg + "\n"
-				   	reg[destreg]= operand1
-				   else: #op1 integer and op2 not integer
-				   	destreg=getreg(operand2,instruction[0])
-				   	asmout = asmout + "\t movl " + operand2 + "," + destreg+ "\n"
-				   	reg[destreg]=operand2
-				   	asmout = asmout + "\t cmpl $" + operand1 + "," + destreg + "\n"
-				   	reg[destreg]= operand1
-				   if operatorin == "==":
-				   	asmout=asmout+"\t je  Loop"+gotoloc +"\n"
+				# if operatorin =="==" or operatorin==">=" or operatorin == "<=" or operatorin == ">" or operatorin == "<" or operatorin == "!=":
+				#    operand1 = instruction[3]
+				#    operand2 = instruction[4]
+				#    gotoloc = instruction[5]
+				#    if integer(operand1) and integer(operand2):
+				#    	destreg=getreg(operand1,instruction[0])
+				#    	asmout = asmout + "\t movl $" + operand1 + ", " + destreg + "\n"
+				#    	#reg[destreg]=int(operand1)
+				#    	asmout= asmout + "\t cmpl $" + operand2 +", " + destreg + "\n"
+				#    	reg[destreg]=operand1
+				#    elif not integer(operand1) and not integer(operand2):
+				#    	destreg=getreg(operand1,instruction[0])
+				#    	#regop1 = getreg(operand1)
+				#    	regop2 = getreg(operand2,instruction[0])
+				#    	reg[regop2]=operand2
+				#    	asmout = asmout + "\t movl " + operand1 + "," + destreg+ "\n"
+				#    	reg[destreg]=operand1
+				#    	asmout = asmout + "\t movl " + operand2 + "," + regop2 + "\n"
+				#    	asmout = asmout + "\t cmpl " + regop2 + "," + destreg + "\n"
+				#    	reg[destreg]= operand1 
+				#    elif not integer(operand1) and integer(operand2):
+				#    	destreg=getreg(operand1,instruction[0])
+				#    	asmout = asmout + "\t movl " + operand1 + "," + destreg+ "\n"
+				#    	reg[destreg]=operand1
+				#    	asmout = asmout + "\t cmpl $" + operand2 + "," + destreg + "\n"
+				#    	reg[destreg]= operand1
+				#    else: #op1 integer and op2 not integer
+				#    	destreg=getreg(operand2,instruction[0])
+				#    	asmout = asmout + "\t movl " + operand2 + "," + destreg+ "\n"
+				#    	reg[destreg]=operand2
+				#    	asmout = asmout + "\t cmpl $" + operand1 + "," + destreg + "\n"
+				#    	reg[destreg]= operand1
+				#    if operatorin == "==":
+				#    	asmout=asmout+"\t je  Loop"+gotoloc +"\n"
 
-				   elif operatorin == "<=":
-				   	asmout=asmout+"\t jle  Loop"+gotoloc +"\n"
+				#    elif operatorin == "<=":
+				#    	asmout=asmout+"\t jle  Loop"+gotoloc +"\n"
 
-				   elif operatorin == "<":
-				   	asmout=asmout+"\t jl  Loop"+gotoloc +"\n"
+				#    elif operatorin == "<":
+				#    	asmout=asmout+"\t jl  Loop"+gotoloc +"\n"
 				   
-				   elif operatorin == ">=":
-				   	asmout=asmout+"\t jge  Loop"+gotoloc +"\n"
+				#    elif operatorin == ">=":
+				#    	asmout=asmout+"\t jge  Loop"+gotoloc +"\n"
 				
-				   elif operatorin == ">":
-				   	asmout=asmout+"\t jg  Loop"+gotoloc +"\n"
+				#    elif operatorin == ">":
+				#    	asmout=asmout+"\t jg  Loop"+gotoloc +"\n"
 				
-				   elif operatorin == "!=":
-				   	asmout=asmout+"\t jne  Loop"+gotoloc +"\n"
+				#    elif operatorin == "!=":
+				#    	asmout=asmout+"\t jne  Loop"+gotoloc +"\n"
 
-			 	elif operatorin == '&&'or operatorin == '&' :
+			 # 	elif operatorin == '&&'or operatorin == '&' :
 
-			 	   operand1 = instruction[3]
-				   operand2 = instruction[4]
-				   gotoloc = instruction[5]
-			 	   #dest = instruction[2]
-				   #operand1 = instruction[3]
-				   #operand2 = instruction[4]
-				   if integer(operand1) and integer(operand2):
-				   	destreg=getreg(operand1,instruction[0])
-				   	asmout = asmout + "\t movl $" + operand1 + ", " + destreg + "\n"
-				   	#reg[destreg]=int(operand1)
-				   	asmout= asmout + "\t andl $" + operand2 +", " + destreg + "\n"
-				   	reg[destreg]=operand1
-				   elif not integer(operand1) and not integer(operand2):
-				   	destreg=getreg(operand1,instruction[0])
-				   	#regop1 = getreg(operand1)
-				   	regop2 = getreg(operand2,instruction[0])
-				   	reg[regop2]=operand2
-				   	asmout = asmout + "\t movl " + operand1 + "," + destreg+ "\n"
-				   	reg[destreg]=operand1
-				   	asmout = asmout + "\t movl " + operand2 + "," + regop2 + "\n"
-				   	asmout = asmout + "\t andl " + regop2 + "," + destreg + "\n"
-				   	reg[destreg]= operand1 
-				   elif not integer(operand1) and integer(operand2):
-				   	destreg=getreg(operand1,instruction[0])
-				   	asmout = asmout + "\t movl " + operand1 + "," + destreg+ "\n"
-				   	reg[destreg]=operand1
-				   	asmout = asmout + "\t andl $" + operand2 + "," + destreg + "\n"
-				   	reg[destreg]= operand1
-				   else: #op1 integer and op2 not integer
-				   	destreg=getreg(operand2,instruction[0])
-				   	asmout = asmout + "\t movl " + operand2 + "," + destreg+ "\n"
-				   	reg[destreg]=operand2
-				   	asmout = asmout + "\t andl $" + operand1 + "," + destreg + "\n"
-				   	reg[destreg]= operand1
-				   asmout=asmout+"\t jnz  Loop"+gotoloc +"\n"
+			 # 	   operand1 = instruction[3]
+				#    operand2 = instruction[4]
+				#    gotoloc = instruction[5]
+			 # 	   #dest = instruction[2]
+				#    #operand1 = instruction[3]
+				#    #operand2 = instruction[4]
+				#    if integer(operand1) and integer(operand2):
+				#    	destreg=getreg(operand1,instruction[0])
+				#    	asmout = asmout + "\t movl $" + operand1 + ", " + destreg + "\n"
+				#    	#reg[destreg]=int(operand1)
+				#    	asmout= asmout + "\t andl $" + operand2 +", " + destreg + "\n"
+				#    	reg[destreg]=operand1
+				#    elif not integer(operand1) and not integer(operand2):
+				#    	destreg=getreg(operand1,instruction[0])
+				#    	#regop1 = getreg(operand1)
+				#    	regop2 = getreg(operand2,instruction[0])
+				#    	reg[regop2]=operand2
+				#    	asmout = asmout + "\t movl " + operand1 + "," + destreg+ "\n"
+				#    	reg[destreg]=operand1
+				#    	asmout = asmout + "\t movl " + operand2 + "," + regop2 + "\n"
+				#    	asmout = asmout + "\t andl " + regop2 + "," + destreg + "\n"
+				#    	reg[destreg]= operand1 
+				#    elif not integer(operand1) and integer(operand2):
+				#    	destreg=getreg(operand1,instruction[0])
+				#    	asmout = asmout + "\t movl " + operand1 + "," + destreg+ "\n"
+				#    	reg[destreg]=operand1
+				#    	asmout = asmout + "\t andl $" + operand2 + "," + destreg + "\n"
+				#    	reg[destreg]= operand1
+				#    else: #op1 integer and op2 not integer
+				#    	destreg=getreg(operand2,instruction[0])
+				#    	asmout = asmout + "\t movl " + operand2 + "," + destreg+ "\n"
+				#    	reg[destreg]=operand2
+				#    	asmout = asmout + "\t andl $" + operand1 + "," + destreg + "\n"
+				#    	reg[destreg]= operand1
+				#    asmout=asmout+"\t jnz  Loop"+gotoloc +"\n"
 
-			 	elif operatorin == '||' or operatorin == '|':
+			 # 	elif operatorin == '||' or operatorin == '|':
 
-			 	   operand1 = instruction[3]
-				   operand2 = instruction[4]
-				   gotoloc = instruction[5]
+			 # 	   operand1 = instruction[3]
+				#    operand2 = instruction[4]
+				#    gotoloc = instruction[5]
 
-			 	   if (integer(operand1) and integer(operand2)):
-				   		destreg=getreg(operand1,instruction[0])
-				   		asmout = asmout + "\t movl $" + operand1 + ", " + destreg + "\n"
-				   		#reg[destreg]=int(operand1)
-				   		asmout= asmout + "\t orl $" + operand2 +", " + destreg + "\n"
-				   		reg[destreg]=operand1
-				   elif not integer(operand1) and not integer(operand2):
-				   		destreg=getreg(operand1,instruction[0])
-				   		#regop1 = getreg(operand1)
-				   		regop2 = getreg(operand2,instruction[0])
-				   		reg[regop2]=operand2
-				   		asmout = asmout + "\t movl " + operand1 + "," + destreg+ "\n"
-				   		reg[destreg]=operand1
-				   		asmout = asmout + "\t movl " + operand2 + "," + regop2 + "\n"
-				   		asmout = asmout + "\t orl " + regop2 + "," + destreg + "\n"
-				   		reg[destreg]= operand1 
-				   elif not integer(operand1) and integer(operand2):
-				   		destreg=getreg(operand1,instruction[0])
-					   	asmout = asmout + "\t movl " + operand1 + "," + destreg+ "\n"
-					   	reg[destreg]=operand1
-					   	asmout = asmout + "\t orl $" + operand2 + "," + destreg + "\n"
-				   		reg[destreg]= operand1
-				   else: #op1 integer and op2 not integer
-				   		destreg=getreg(operand2,instruction[0])
-				   		asmout = asmout + "\t movl " + operand2 + "," + destreg+ "\n"
-				   		reg[destreg]=operand2
-				   		asmout = asmout + "\t orl $" + operand1 + "," + destreg + "\n"
-				   		reg[destreg]= operand1
+			 # 	   if (integer(operand1) and integer(operand2)):
+				#    		destreg=getreg(operand1,instruction[0])
+				#    		asmout = asmout + "\t movl $" + operand1 + ", " + destreg + "\n"
+				#    		#reg[destreg]=int(operand1)
+				#    		asmout= asmout + "\t orl $" + operand2 +", " + destreg + "\n"
+				#    		reg[destreg]=operand1
+				#    elif not integer(operand1) and not integer(operand2):
+				#    		destreg=getreg(operand1,instruction[0])
+				#    		#regop1 = getreg(operand1)
+				#    		regop2 = getreg(operand2,instruction[0])
+				#    		reg[regop2]=operand2
+				#    		asmout = asmout + "\t movl " + operand1 + "," + destreg+ "\n"
+				#    		reg[destreg]=operand1
+				#    		asmout = asmout + "\t movl " + operand2 + "," + regop2 + "\n"
+				#    		asmout = asmout + "\t orl " + regop2 + "," + destreg + "\n"
+				#    		reg[destreg]= operand1 
+				#    elif not integer(operand1) and integer(operand2):
+				#    		destreg=getreg(operand1,instruction[0])
+				# 	   	asmout = asmout + "\t movl " + operand1 + "," + destreg+ "\n"
+				# 	   	reg[destreg]=operand1
+				# 	   	asmout = asmout + "\t orl $" + operand2 + "," + destreg + "\n"
+				#    		reg[destreg]= operand1
+				#    else: #op1 integer and op2 not integer
+				#    		destreg=getreg(operand2,instruction[0])
+				#    		asmout = asmout + "\t movl " + operand2 + "," + destreg+ "\n"
+				#    		reg[destreg]=operand2
+				#    		asmout = asmout + "\t orl $" + operand1 + "," + destreg + "\n"
+				#    		reg[destreg]= operand1
 
-				   asmout=asmout+"\t jnz  Loop"+gotoloc +"\n"
+				#    asmout=asmout+"\t jnz  Loop"+gotoloc +"\n"
 
-		        	elif operatorin == '!':
+		  #       	elif operatorin == '!':
 
-		        	   operand1 = instruction[3]
-				   #operand2 = instruction[4]
-				   gotoloc = instruction[4]
+		  #       	   operand1 = instruction[3]
+				#    #operand2 = instruction[4]
+				#    gotoloc = instruction[4]
 
-			     	   #dest=instruction[2]
-		        	   destreg = getreg(operand1,instruction[0]) 
-		        	   if integer(operand1):
-		        	   	asmout = asmout + "\t movl $" + operand1 + " , " + destreg + "\n"
-			 		asmout = asmout + "\t notl " + destreg + "\n"
-			 	   else:
-			 	   	asmout = asmout + "\t movl " + operand1 + " , " + destreg + "\n"
-			 		asmout = asmout + "\t notl " + destreg + "\n"
-			 	   reg[destreg]=operand1
-			 	   asmout=asmout+"\t jnz  Loop"+gotoloc +"\n"
+			 #     	   #dest=instruction[2]
+		  #       	   destreg = getreg(operand1,instruction[0]) 
+		  #       	   if integer(operand1):
+		  #       	   	asmout = asmout + "\t movl $" + operand1 + " , " + destreg + "\n"
+			 # 		asmout = asmout + "\t notl " + destreg + "\n"
+			 # 	   else:
+			 # 	   	asmout = asmout + "\t movl " + operand1 + " , " + destreg + "\n"
+			 # 		asmout = asmout + "\t notl " + destreg + "\n"
+			 # 	   reg[destreg]=operand1
+			 # 	   asmout=asmout+"\t jnz  Loop"+gotoloc +"\n"
 			
 		elif operator == "goto":
 
