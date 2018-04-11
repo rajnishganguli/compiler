@@ -2,7 +2,8 @@
 all:
 	chmod +x src/parser.py
 	cp src/parser.py bin
-	mv bin/parser.py bin/irgen
+	cp src/irgen bin
+	chmod +x bin/irgen
 	chmod +x src/Lexer.py
 	cp src/Lexer.py bin/lexer.py
 	cp src/TAC.py bin
@@ -10,3 +11,4 @@ all:
 	
 clean:
 	rm -rf bin/*
+	# rm -f *.ir
