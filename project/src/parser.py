@@ -249,10 +249,12 @@ def p_statement_definition_5(p):
 def p_statement_definition_6(p):
     '''statement : if_else_statement'''
     p[0] = p[1]
-def p_if_cond_1(p):
+def p_if_cond_0(p):
     '''if_cond :  TYPE_BOOLEAN'''
     p[0] = p[1]
-
+def p_if_cond_1(p):
+    '''if_cond :  rightside'''
+    p[0] = p[1]
 def p_if_cond_2(p):
     '''if_cond :  comparison_statement'''
     p[0] = p[1]
@@ -272,7 +274,7 @@ def p_if_cond_4(p):
 def p_if_cond_5(p):
     '''if_cond : OP_BITNOT if_cond '''
     temp_name = ST.newtemp({"type" : p[2]["type"]})
-    TAC.emit('Arithmetic',[p[1],temp_name, p[2]['place']])
+    TAC.emit('logicalNOT',[p[1],temp_name, p[2]['place']])
     p[0] = {"place": temp_name, "type": p[2]["type"]}
 
 def p_comparison_statement_0(p):

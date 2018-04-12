@@ -1080,7 +1080,7 @@ def prodAsm(instruction):
 				# Update the address descriptor entry for dest variable to say where it is stored now
 				setlocation(dest, destreg)
 			relcount = relcount + 1
-		elif operator == "&&":
+		elif operator == "&":
 			#LineNo, &&, dest, op1, op2
 			dest = instruction[2]
 			operand1 = instruction[3]		#num
@@ -1144,7 +1144,7 @@ def prodAsm(instruction):
 				registerDescriptor[destreg]=dest
 				# Update the address descriptor entry for dest variable to say where it is stored now
 				setlocation(dest, destreg)
-		elif operator == "||":
+		elif operator == "|":
 			#LineNo, ||, dest, op1, op2
 			dest = instruction[2]
 			operand1 = instruction[3]		#op1
@@ -1208,7 +1208,226 @@ def prodAsm(instruction):
 				registerDescriptor[destreg]=dest
 				# Update the address descriptor entry for dest variable to say where it is stored now
 				setlocation(dest, destreg)
-
+		elif operator == '&&':
+			dest = instruction[2]
+			operand1 = instruction[3]
+			operand2 = instruction[4]
+			LT = "LT"+str(relcount)
+			NLT = "NLT"+str(relcount)
+			if integer(operand1) and integer(operand2):
+				destreg = getReg(dest, lineNo)
+				asmout = asmout + "movl $" + str(int(int(operand1) and int(operand2))) + ", " + destreg + "\n"
+				registerDescriptor[destreg]=dest
+				setlocation(dest, destreg)
+			elif integer(operand1) and not integer(operand2):
+				destreg = getReg(dest, lineNo)
+				location2 = getlocation(operand2)
+				asmout = asmout + "movl $" + operand1 + ", " + destreg + "\n"
+				asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+				asmout = asmout + "je " + LT + "\n"
+				if location2 != "mem":
+					asmout = asmout + "movl " + location2 + ", " + destreg + "\n"
+				else:
+					asmout = asmout + "movl " + operand2 + ", " + destreg + "\n"
+				asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+				asmout = asmout + "je " + LT + "\n"
+				asmout = asmout + "movl $1, " + destreg + "\n"
+				asmout = asmout + "jmp " + NLT + "\n"
+				asmout = asmout + LT + ":" + "\n"
+				asmout = asmout + "movl $0, " + destreg + "\n"
+				asmout = asmout + NLT + ":" + "\n"
+				registerDescriptor[destreg]=dest
+				setlocation(dest, destreg)				
+			elif not integer(operand1) and integer(operand2):
+				destreg = getReg(dest, lineNo)
+				location1 = getlocation(operand1)
+				if location1 != "mem":
+					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
+				else:
+					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
+				asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+				asmout = asmout + "je " + LT + "\n"
+				asmout = asmout + "movl $" + operand2 + ", " + destreg + "\n"
+				asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+				asmout = asmout + "je " + LT + "\n"
+				asmout = asmout + "movl $1, " + destreg + "\n"
+				asmout = asmout + "jmp " + NLT + "\n"
+				asmout = asmout + LT + ":" + "\n"
+				asmout = asmout + "movl $0, " + destreg + "\n"
+				asmout = asmout + NLT + ":" + "\n"
+				registerDescriptor[destreg]=dest
+				setlocation(dest, destreg)				
+			elif not integer(operand1) and not integer(operand2):
+				destreg = getReg(dest, lineNo)
+				location1 = getlocation(operand1)
+				location2 = getlocation(operand2)
+				if location1 != "mem" and location2 != "mem":
+					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
+					asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+					asmout = asmout + "je " + LT + "\n"
+					asmout = asmout + "movl " + location2 + ", " + destreg + "\n"
+					asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+					asmout = asmout + "je " + LT + "\n"
+					asmout = asmout + "movl $1, " + destreg + "\n"
+					asmout = asmout + "jmp " + NLT + "\n"
+					asmout = asmout + LT + ":" + "\n"
+					asmout = asmout + "movl $0, " + destreg + "\n"
+					asmout = asmout + NLT + ":" + "\n"
+				elif location1 == "mem" and location2 != "mem":
+					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
+					asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+					asmout = asmout + "je " + LT + "\n"
+					asmout = asmout + "movl " + location2 + ", " + destreg + "\n"
+					asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+					asmout = asmout + "je " + LT + "\n"
+					asmout = asmout + "movl $1, " + destreg + "\n"
+					asmout = asmout + "jmp " + NLT + "\n"
+					asmout = asmout + LT + ":" + "\n"
+					asmout = asmout + "movl $0, " + destreg + "\n"
+					asmout = asmout + NLT + ":" + "\n"
+				elif location1 != "mem" and location2 == "mem":
+					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
+					asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+					asmout = asmout + "je " + LT + "\n"
+					asmout = asmout + "movl " + operand2 + ", " + destreg + "\n"
+					asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+					asmout = asmout + "je " + LT + "\n"
+					asmout = asmout + "movl $1, " + destreg + "\n"
+					asmout = asmout + "jmp " + NLT + "\n"
+					asmout = asmout + LT + ":" + "\n"
+					asmout = asmout + "movl $0, " + destreg + "\n"
+					asmout = asmout + NLT + ":" + "\n"
+				elif location1 == "mem" and location2 == "mem":
+					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
+					asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+					asmout = asmout + "je " + LT + "\n"
+					asmout = asmout + "movl " + operand2 + ", " + destreg + "\n"
+					asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+					asmout = asmout + "je " + LT + "\n"
+					asmout = asmout + "movl $1, " + destreg + "\n"
+					asmout = asmout + "jmp " + NLT + "\n"
+					asmout = asmout + LT + ":" + "\n"
+					asmout = asmout + "movl $0, " + destreg + "\n"
+					asmout = asmout + NLT + ":" + "\n"
+				registerDescriptor[destreg]=dest
+				setlocation(dest, destreg)
+			relcount = relcount + 1
+			for var in varlist:
+				location = getlocation(var)
+				if location != "mem":
+					asmout = asmout + "movl " + location + ", " + var + "\n"
+					setlocation(var, "mem")
+					registerDescriptor[location]=None
+		elif operator == '||':
+			dest = instruction[2]
+			operand1 = instruction[3]
+			operand2 = instruction[4]
+			LT = "LT"+str(relcount)
+			NLT = "NLT"+str(relcount)
+			if integer(operand1) and integer(operand2):
+				destreg = getReg(dest, lineNo)
+				asmout = asmout + "movl $" + str(int(int(operand1) or int(operand2))) + ", " + destreg + "\n"
+				registerDescriptor[destreg]=dest
+				setlocation(dest, destreg)
+			elif integer(operand1) and not integer(operand2):
+				destreg = getReg(dest, lineNo)
+				location2 = getlocation(operand2)
+				asmout = asmout + "movl $" + operand1 + ", " + destreg + "\n"
+				asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+				asmout = asmout + "jne " + LT + "\n"
+				if location2 != "mem":
+					asmout = asmout + "movl " + location2 + ", " + destreg + "\n"
+				else:
+					asmout = asmout + "movl " + operand2 + ", " + destreg + "\n"
+				asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+				asmout = asmout + "jne " + LT + "\n"
+				asmout = asmout + "movl $0, " + destreg + "\n"
+				asmout = asmout + "jmp " + NLT + "\n"
+				asmout = asmout + LT + ":" + "\n"
+				asmout = asmout + "movl $1, " + destreg + "\n"
+				asmout = asmout + NLT + ":" + "\n"
+				registerDescriptor[destreg]=dest
+				setlocation(dest, destreg)				
+			elif not integer(operand1) and integer(operand2):
+				destreg = getReg(dest, lineNo)
+				location1 = getlocation(operand1)
+				if location1 != "mem":
+					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
+				else:
+					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
+				asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+				asmout = asmout + "jne " + LT + "\n"
+				asmout = asmout + "movl $" + operand2 + ", " + destreg + "\n"
+				asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+				asmout = asmout + "jne " + LT + "\n"
+				asmout = asmout + "movl $0, " + destreg + "\n"
+				asmout = asmout + "jmp " + NLT + "\n"
+				asmout = asmout + LT + ":" + "\n"
+				asmout = asmout + "movl $1, " + destreg + "\n"
+				asmout = asmout + NLT + ":" + "\n"
+				registerDescriptor[destreg]=dest
+				setlocation(dest, destreg)				
+			elif not integer(operand1) and not integer(operand2):
+				destreg = getReg(dest, lineNo)
+				location1 = getlocation(operand1)
+				location2 = getlocation(operand2)
+				if location1 != "mem" and location2 != "mem":
+					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
+					asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+					asmout = asmout + "jne " + LT + "\n"
+					asmout = asmout + "movl " + location2 + ", " + destreg + "\n"
+					asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+					asmout = asmout + "jne " + LT + "\n"
+					asmout = asmout + "movl $0, " + destreg + "\n"
+					asmout = asmout + "jmp " + NLT + "\n"
+					asmout = asmout + LT + ":" + "\n"
+					asmout = asmout + "movl $1, " + destreg + "\n"
+					asmout = asmout + NLT + ":" + "\n"
+				elif location1 == "mem" and location2 != "mem":
+					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
+					asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+					asmout = asmout + "jne " + LT + "\n"
+					asmout = asmout + "movl " + location2 + ", " + destreg + "\n"
+					asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+					asmout = asmout + "jne " + LT + "\n"
+					asmout = asmout + "movl $0, " + destreg + "\n"
+					asmout = asmout + "jmp " + NLT + "\n"
+					asmout = asmout + LT + ":" + "\n"
+					asmout = asmout + "movl $1, " + destreg + "\n"
+					asmout = asmout + NLT + ":" + "\n"
+				elif location1 != "mem" and location2 == "mem":
+					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
+					asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+					asmout = asmout + "jne " + LT + "\n"
+					asmout = asmout + "movl " + operand2 + ", " + destreg + "\n"
+					asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+					asmout = asmout + "jne " + LT + "\n"
+					asmout = asmout + "movl $0, " + destreg + "\n"
+					asmout = asmout + "jmp " + NLT + "\n"
+					asmout = asmout + LT + ":" + "\n"
+					asmout = asmout + "movl $1, " + destreg + "\n"
+					asmout = asmout + NLT + ":" + "\n"
+				elif location1 == "mem" and location2 == "mem":
+					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
+					asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+					asmout = asmout + "jne " + LT + "\n"
+					asmout = asmout + "movl " + operand2 + ", " + destreg + "\n"
+					asmout = asmout + "cmp " + '$0' + ", " + destreg + "\n"
+					asmout = asmout + "jne " + LT + "\n"
+					asmout = asmout + "movl $0, " + destreg + "\n"
+					asmout = asmout + "jmp " + NLT + "\n"
+					asmout = asmout + LT + ":" + "\n"
+					asmout = asmout + "movl $1, " + destreg + "\n"
+					asmout = asmout + NLT + ":" + "\n"
+				registerDescriptor[destreg]=dest
+				setlocation(dest, destreg)
+			relcount = relcount + 1
+			for var in varlist:
+				location = getlocation(var)
+				if location != "mem":
+					asmout = asmout + "movl " + location + ", " + var + "\n"
+					setlocation(var, "mem")
+					registerDescriptor[location]=None
 		elif operator == "!":
 			#LineNo, not, dest, op1
 			dest = instruction[2]
