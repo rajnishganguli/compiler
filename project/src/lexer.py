@@ -133,7 +133,7 @@ def t_OP_EXPO(t):
     return t
 
 def t_OP_REMDR(t):
-    r'%%'
+    r'%'
     return t
 
 def t_OP_COMP(t):

@@ -232,50 +232,93 @@ def prodAsm(instruction):
 			asmout = asmout + "movl %eax, " + dest + "\n"
 			registerDescriptor['%eax'] = None
 			addressDescriptor[dest] = 'mem'
-		# elif (operator == '/' or operator == '%/%' or operator =='%%'):
 
-		# 	dest = instruction[2]
-		# 	operand1 = instruction[3]
-		# 	operand2 = instruction[4]
-
-		# 	# we have to free registers rax and edx 
-
-		# 	if reg['%eax'] != None: 
-		# 	   	asmout = asmout + freereg('%eax')		#function to free a register
-		# 	if reg['%edx'] != None:
-		# 	   	asmout = asmout + freereg('%edx')
-		# 	if reg['%ebx'] != None:
-		# 	   	asmout = asmout + freereg('%ebx')
-
-		# 	if integer(operand1):
-		# 	   	asmout = asmout + "\t movl $" + operand1 + " , %eax\n"
-		# 	   	#reg['%eax']=int(operand1)
-		# 	else:
-		# 	   	asmout = asmout + "\t movl " + operand1+ " , %eax\n"
-		# 	   	reg['%eax']=operand1
-		# 	if integer(operand2):
-		# 	   	asmout = asmout + "\t movl $" + operand2 + " , %ebx\n"
-		# 	   	#reg['%ebx']=int(operand2)
-		# 	   	asmout = asmout + "\t xorl %edx , %edx \n"
-		# 		reg['%edx']= 0
-		# 		asmout=asmout + "\t idiv %ebx\n"
-		# 	else:
-		# 	   	asmout = asmout + "\t movl " + operand2 + " , %ebx\n"
-		# 	   	reg['%ebx']=operand2
-		# 		asmout = asmout + "\t xorl %edx , %edx \n"
-		# 		reg['%edx']= 0
-		# 		asmout=asmout + "\t idiv %ebx\n"
-
-		# 	if operator == '%%':
-		# 		asmout = asmout + "\t movl %edx , " + dest + "\n"
-		# 	   	#reg['%eax'] = "Quotient for the modulus operation"
-		# 		reg['%edx'] = dest
-		# 	else:
-		# 		asmout = asmout + "\t movl %eax , " + dest + "\n"
-		# 	   	reg['%eax'] = dest
-		# 	   	#reg['%edx'] = "Reminder of division" 
-
-
+		elif (operator == '/'):
+			dest = instruction[2]
+			operand1 = instruction[3]
+			operand2 = instruction[4]
+			if registerDescriptor['%eax'] != None:
+				asmout = asmout + "movl %eax, " + registerDescriptor['%eax'] + "\n"
+				setlocation(registerDescriptor['%eax'], "mem")
+			if registerDescriptor['%edx'] != None:
+				asmout = asmout + "movl %edx, " + registerDescriptor['%edx'] + "\n"
+				setlocation(registerDescriptor['%edx'], "mem")
+			if registerDescriptor['%ecx'] != None:
+				asmout = asmout + "movl %ecx, " + registerDescriptor['%ecx'] + "\n"
+				setlocation(registerDescriptor['%ecx'], "mem")
+			if not integer(operand1):
+				location1 = getlocation(operand1)
+				setlocation(operand1, "mem")
+			if not integer(operand2):
+				location2 = getlocation(operand2)
+				setlocation(operand2, "mem")
+			asmout = asmout + "movl $0, %edx \n"
+			if not integer(operand1) and not integer(operand2):
+				asmout = asmout + "movl " + operand1 + ", %eax \n"
+				asmout = asmout + "movl " + operand2 + ", %ecx \n"
+				asmout = asmout + "idiv %ecx \n"
+				setlocation(dest, '%eax')
+			elif integer(operand1) and not integer(operand2):
+				asmout = asmout + "movl $" + (operand1) + ", %eax \n"
+				asmout = asmout + "movl " + operand2 + ", %ecx \n"
+				asmout = asmout + "idiv %ecx \n"
+				setlocation(dest, '%eax')
+			elif not integer(operand1) and integer(operand2):
+				location1 = getlocation(operand1)
+				asmout = asmout + "movl " + operand1 + ", %eax \n"
+				asmout = asmout + "movl $" + (operand2) + ", %ecx \n"
+				asmout = asmout + "idiv %ecx \n"
+				setlocation(dest, '%eax')
+			else:
+				ansdiv = int(int(operand1)/int(operand2))
+				asmout = asmout + "movl $" + str(ansdiv) + ", %eax \n"
+				setlocation(dest, '%eax')
+			asmout = asmout + "movl %eax, " + dest + "\n"
+			registerDescriptor['%eax'] = None
+			addressDescriptor[dest] = 'mem'
+		elif (operator == '%'):
+			dest = instruction[2]
+			operand1 = instruction[3]
+			operand2 = instruction[4]
+			if registerDescriptor['%eax'] != None:
+				asmout = asmout + "movl %eax, " + registerDescriptor['%eax'] + "\n"
+				setlocation(registerDescriptor['%eax'], "mem")
+			if registerDescriptor['%edx'] != None:
+				asmout = asmout + "movl %edx, " + registerDescriptor['%edx'] + "\n"
+				setlocation(registerDescriptor['%edx'], "mem")
+			if registerDescriptor['%ecx'] != None:
+				asmout = asmout + "movl %ecx, " + registerDescriptor['%ecx'] + "\n"
+				setlocation(registerDescriptor['%ecx'], "mem")
+			if not integer(operand1):
+				location1 = getlocation(operand1)
+				setlocation(operand1, "mem")
+			if not integer(operand2):
+				location2 = getlocation(operand2)
+				setlocation(operand2, "mem")
+			asmout = asmout + "movl $0, %edx \n"
+			if not integer(operand1) and not integer(operand2):
+				asmout = asmout + "movl " + operand1 + ", %eax \n"
+				asmout = asmout + "movl " + operand2 + ", %ecx \n"
+				asmout = asmout + "idiv %ecx \n"
+				setlocation(dest, '%edx')
+			elif integer(operand1) and not integer(operand2):
+				asmout = asmout + "movl $" + (operand1) + ", %eax \n"
+				asmout = asmout + "movl " + operand2 + ", %ecx \n"
+				asmout = asmout + "idiv %ecx \n"
+				setlocation(dest, '%edx')
+			elif not integer(operand1) and integer(operand2):
+				location1 = getlocation(operand1)
+				asmout = asmout + "movl " + operand1 + ", %eax \n"
+				asmout = asmout + "movl $" + (operand2) + ", %ecx \n"
+				asmout = asmout + "idiv %ecx \n"
+				setlocation(dest, '%edx')
+			else:
+				ansdiv = int(int(operand1)%int(operand2))
+				asmout = asmout + "movl $" + str(ansdiv) + ", %edx \n"
+				setlocation(dest, '%edx')
+			asmout = asmout + "movl %edx, " + dest + "\n"
+			registerDescriptor['%edx'] = None
+			addressDescriptor[dest] = 'mem'
 		elif operator == "=":
 			dest = instruction[2]
 			src = instruction[3]
