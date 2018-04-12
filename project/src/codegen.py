@@ -115,9 +115,7 @@ def prodAsm(instruction):
 				elif location1 == "mem" and location2 == "mem":
 					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
 					asmout = asmout + "addl " + operand2 + ", " + destreg + "\n"					
-				# Update the register descriptor entry for destreg to say that it contains the dest
 				registerDescriptor[destreg] = dest
-				# Update the address descriptor entry for dest variable to say where it is stored now
 				setlocation(dest, destreg)
 			elif not integer(operand1) and integer(operand2):
 				# print '3'
@@ -141,6 +139,12 @@ def prodAsm(instruction):
 			   		asmout = asmout + "addl " + operand2 + ", " + destreg + "\n"
 			   	registerDescriptor[destreg] = dest
 			   	setlocation(dest, destreg)
+			for var in varlist:
+				location = getlocation(var)
+				if location != 'mem':
+					asmout = asmout + "movl " + location + ", " + var + "\n"
+					setlocation(var,'mem')
+					registerDescriptor[location] = None
 		elif operator == '-':
 		 	dest = instruction[2]
 			operand1 = instruction[3]
@@ -189,6 +193,12 @@ def prodAsm(instruction):
 			   		asmout = asmout + "subl " + operand2 + ", " + destreg + "\n"
 			   	registerDescriptor[destreg] = dest
 			   	setlocation(dest, destreg)
+			for var in varlist:
+				location = getlocation(var)
+				if location != 'mem':
+					asmout = asmout + "movl " + location + ", " + var + "\n"
+					setlocation(var,'mem')
+					registerDescriptor[location] = None
 		elif operator == '*':
 			dest = instruction[2]
 			operand1 = instruction[3]
@@ -229,10 +239,15 @@ def prodAsm(instruction):
 				asmout = asmout + "movl $" + (operand2) + ", %edx \n"
 				asmout = asmout + "imul %edx \n"
 				setlocation(dest, '%eax')
-			asmout = asmout + "movl %eax, " + dest + "\n"
-			registerDescriptor['%eax'] = None
-			addressDescriptor[dest] = 'mem'
-
+			# asmout = asmout + "movl %eax, " + dest + "\n"
+			# registerDescriptor['%eax'] = None
+			# addressDescriptor[dest] = 'mem'
+			for var in varlist:
+				location = getlocation(var)
+				if location != 'mem':
+					asmout = asmout + "movl " + location + ", " + var + "\n"
+					setlocation(var,'mem')
+					registerDescriptor[location] = None
 		elif (operator == '/'):
 			dest = instruction[2]
 			operand1 = instruction[3]
@@ -273,9 +288,15 @@ def prodAsm(instruction):
 				ansdiv = int(int(operand1)/int(operand2))
 				asmout = asmout + "movl $" + str(ansdiv) + ", %eax \n"
 				setlocation(dest, '%eax')
-			asmout = asmout + "movl %eax, " + dest + "\n"
-			registerDescriptor['%eax'] = None
-			addressDescriptor[dest] = 'mem'
+			# asmout = asmout + "movl %eax, " + dest + "\n"
+			# registerDescriptor['%eax'] = None
+			# addressDescriptor[dest] = 'mem'
+			for var in varlist:
+				location = getlocation(var)
+				if location != 'mem':
+					asmout = asmout + "movl " + location + ", " + var + "\n"
+					setlocation(var,'mem')
+					registerDescriptor[location] = None
 		elif (operator == '%'):
 			dest = instruction[2]
 			operand1 = instruction[3]
@@ -316,9 +337,15 @@ def prodAsm(instruction):
 				ansdiv = int(int(operand1)%int(operand2))
 				asmout = asmout + "movl $" + str(ansdiv) + ", %edx \n"
 				setlocation(dest, '%edx')
-			asmout = asmout + "movl %edx, " + dest + "\n"
-			registerDescriptor['%edx'] = None
-			addressDescriptor[dest] = 'mem'
+			# asmout = asmout + "movl %edx, " + dest + "\n"
+			# registerDescriptor['%edx'] = None
+			# addressDescriptor[dest] = 'mem'
+			for var in varlist:
+				location = getlocation(var)
+				if location != 'mem':
+					asmout = asmout + "movl " + location + ", " + var + "\n"
+					setlocation(var,'mem')
+					registerDescriptor[location] = None
 		elif operator == "=":
 			dest = instruction[2]
 			src = instruction[3]
@@ -344,6 +371,12 @@ def prodAsm(instruction):
 					asmout = asmout + "movl " + src + ", " + location1 + "\n"
 				elif location1 != "mem" and location2 != "mem":
 					asmout = asmout + "movl " + location2 + ", " + location1 + "\n"
+			for var in varlist:
+				location = getlocation(var)
+				if location != 'mem':
+					asmout = asmout + "movl " + location + ", " + var + "\n"
+					setlocation(var,'mem')
+					registerDescriptor[location] = None
 
 	   #      elif operator == "ifgoto":
 
