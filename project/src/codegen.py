@@ -30,7 +30,6 @@ def integer(number):
 			return 0
 
 def getReg(var, lineno):
-	# print registerDescriptor
 	global asmout
 	if var in registerDescriptor.values():
 		for register in registerDescriptor.keys():
@@ -39,19 +38,14 @@ def getReg(var, lineno):
 	for register in registerDescriptor.keys():
 		if registerDescriptor[register] == None:
 			return register	
-
 	instrvardict = nextuseTable[lineno-1]
 	farthestnextuse = max(instrvardict.keys())
-	# print instrvardict
-	# print farthestnextuse
-	# print registerDescriptor
 	for var in instrvardict:
 		if instrvardict[var] == farthestnextuse:
 			break;
 	for regspill in registerDescriptor.keys():
 		if registerDescriptor[regspill] == var:
 			break;
-	# print var
 	asmout = asmout + "movl " + regspill + ", " + var + "\n"
 	addressDescriptor[var] = "mem"
 	return regspill
@@ -471,6 +465,12 @@ def prodAsm(instruction):
 			label = instruction[2]
 			asmout = asmout +  label + ":\n"
 		elif operator == '>':
+			for var in varlist:
+				location = getlocation(var)
+				if location != "mem":
+					asmout = asmout + "movl " + location + ", " + var + "\n"
+					setlocation(var, "mem")
+					registerDescriptor[location] = None
 			dest = instruction[2]
 			operand1 = instruction[3]
 			operand2 = instruction[4]
@@ -511,9 +511,9 @@ def prodAsm(instruction):
 				asmout = asmout + "movl $" + operand2 + ", " + destreg + "\n"
 				# Add the other operand to the register content
 				if location1 != "mem":
-					asmout = asmout + "cmpl " + location1 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + destreg + ", " + location1 + "\n"
 				else:
-					asmout = asmout + "cmpl " + operand1 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + destreg + ", " + operand1 + "\n"
 				asmout = asmout + "jg " + LT + "\n"
 				asmout = asmout + "movl $0, " + destreg + "\n"
 				asmout = asmout + "jmp " + NLT + "\n"
@@ -530,10 +530,10 @@ def prodAsm(instruction):
 				location2 = getlocation(operand2)
 				if location1 != "mem" and location2 != "mem":
 					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
-					asmout = asmout + "cmpl " + location2 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + destreg + ", " + location2 + "\n"
 				elif location1 == "mem" and location2 != "mem":
 					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
-					asmout = asmout + "cmpl " + location2 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + destreg + ", " + location2 + "\n"
 				elif location1 != "mem" and location2 == "mem":
 					asmout = asmout + "movl " + operand2 + ", " + destreg + "\n"
 					asmout = asmout + "cmpl " + destreg + ", " + location1 + "\n"
@@ -651,6 +651,7 @@ def prodAsm(instruction):
 				if location != "mem":
 					asmout = asmout + "movl " + location + ", " + var + "\n"
 					setlocation(var, "mem")
+					registerDescriptor[location] = None
 			dest = instruction[2]
 			operand1 = instruction[3]
 			operand2 = instruction[4]
@@ -691,9 +692,9 @@ def prodAsm(instruction):
 				asmout = asmout + "movl $" + operand2 + ", " + destreg + "\n"
 				# Add the other operand to the register content
 				if location1 != "mem":
-					asmout = asmout + "cmpl " + location1 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + destreg + ", " + location1 + "\n"
 				else:
-					asmout = asmout + "cmpl " + operand1 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + destreg + ", " + operand1 + "\n"
 				asmout = asmout + "jl " + LT + "\n"
 				asmout = asmout + "movl $0, " + destreg + "\n"
 				asmout = asmout + "jmp " + NLT + "\n"
@@ -710,10 +711,10 @@ def prodAsm(instruction):
 				location2 = getlocation(operand2)
 				if location1 != "mem" and location2 != "mem":
 					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
-					asmout = asmout + "cmp " + location2 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + destreg + ", " + location2 + "\n"
 				elif location1 == "mem" and location2 != "mem":
 					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
-					asmout = asmout + "cmp " + location2 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + destreg + ", " + location2 + "\n"
 				elif location1 != "mem" and location2 == "mem":
 					asmout = asmout + "movl " + operand2 + ", " + destreg + "\n"
 					asmout = asmout + "cmpl " + destreg + ", " + location1 + "\n"
@@ -732,6 +733,12 @@ def prodAsm(instruction):
 				setlocation(dest, destreg)
 			relcount = relcount + 1			
 		elif operator == '>=':
+			for var in varlist:
+				location = getlocation(var)
+				if location != "mem":
+					asmout = asmout + "movl " + location + ", " + var + "\n"
+					setlocation(var, "mem")
+					registerDescriptor[location] = None
 			dest = instruction[2]
 			operand1 = instruction[3]
 			operand2 = instruction[4]
@@ -772,9 +779,9 @@ def prodAsm(instruction):
 				asmout = asmout + "movl $" + operand2 + ", " + destreg + "\n"
 				# Add the other operand to the register content
 				if location1 != "mem":
-					asmout = asmout + "cmpl " + location1 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + destreg + ", " + location1 + "\n"
 				else:
-					asmout = asmout + "cmpl " + operand1 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + destreg + ", " + operand1 + "\n"
 				asmout = asmout + "jge " + LT + "\n"
 				asmout = asmout + "movl $0, " + destreg + "\n"
 				asmout = asmout + "jmp " + NLT + "\n"
@@ -791,10 +798,10 @@ def prodAsm(instruction):
 				location2 = getlocation(operand2)
 				if location1 != "mem" and location2 != "mem":
 					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
-					asmout = asmout + "cmpl " + location2 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + destreg + ", " + location2 + "\n"
 				elif location1 == "mem" and location2 != "mem":
 					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
-					asmout = asmout + "cmpl " + location2 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + destreg + ", " + location2 + "\n"
 				elif location1 != "mem" and location2 == "mem":
 					asmout = asmout + "movl " + operand2 + ", " + destreg + "\n"
 					asmout = asmout + "cmpl " + destreg + ", " + location1 + "\n"
@@ -813,6 +820,12 @@ def prodAsm(instruction):
 				setlocation(dest, destreg)
 			relcount = relcount + 1
 		elif operator == '<=':
+			for var in varlist:
+				location = getlocation(var)
+				if location != "mem":
+					asmout = asmout + "movl " + location + ", " + var + "\n"
+					setlocation(var, "mem")
+					registerDescriptor[location] = None
 			dest = instruction[2]
 			operand1 = instruction[3]
 			operand2 = instruction[4]
@@ -853,9 +866,9 @@ def prodAsm(instruction):
 				asmout = asmout + "movl $" + operand2 + ", " + destreg + "\n"
 				# Add the other operand to the register content
 				if location1 != "mem":
-					asmout = asmout + "cmpl " + location1 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + destreg + ", " + location1 + "\n"
 				else:
-					asmout = asmout + "cmpl " + operand1 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + destreg + ", " + operand1 + "\n"
 				asmout = asmout + "jle " + LT + "\n"
 				asmout = asmout + "movl $0, " + destreg + "\n"
 				asmout = asmout + "jmp " + NLT + "\n"
@@ -872,16 +885,15 @@ def prodAsm(instruction):
 				location2 = getlocation(operand2)
 				if location1 != "mem" and location2 != "mem":
 					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
-					asmout = asmout + "cmpl " + location2 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + destreg + ", " + location2 + "\n"
 				elif location1 == "mem" and location2 != "mem":
 					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
-					asmout = asmout + "cmpl " + location2 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + destreg + ", " + location2 + "\n"
 				elif location1 != "mem" and location2 == "mem":
 					asmout = asmout + "movl " + operand2 + ", " + destreg + "\n"
 					asmout = asmout + "cmpl " + destreg + ", " + location1 + "\n"
 				elif location1 == "mem" and location2 == "mem":
 					asmout = asmout + "movl " + operand2 + ", " + destreg + "\n"
-					asmout = asmout + "cmpl " + destreg + ", " + operand1 + "\n"					
 					asmout = asmout + "cmpl " + destreg + ", " + operand1 + "\n"					
 				# Update the register descriptor entry for destreg to say that it contains the dest
 				asmout = asmout + "jle " + LT + "\n"
