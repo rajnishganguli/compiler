@@ -246,7 +246,7 @@ def prodAsm(instruction):
 					asmout = asmout + "movl " + location + ", " + var + "\n"
 					setlocation(var,'mem')
 					registerDescriptor[location] = None
-		elif (operator == '/'):
+		elif operator == '/':
 			dest = instruction[2]
 			operand1 = instruction[3]
 			operand2 = instruction[4]
@@ -295,7 +295,7 @@ def prodAsm(instruction):
 					asmout = asmout + "movl " + location + ", " + var + "\n"
 					setlocation(var,'mem')
 					registerDescriptor[location] = None
-		elif (operator == '%'):
+		elif operator == '%':
 			dest = instruction[2]
 			operand1 = instruction[3]
 			operand2 = instruction[4]
@@ -1080,6 +1080,135 @@ def prodAsm(instruction):
 				# Update the address descriptor entry for dest variable to say where it is stored now
 				setlocation(dest, destreg)
 			relcount = relcount + 1
+		elif operator == "&&":
+			#LineNo, &&, dest, op1, op2
+			dest = instruction[2]
+			operand1 = instruction[3]		#num
+			operand2 = instruction[4]		#count
+			if integer(operand1) and integer(operand2):
+				# Get the register to store the dest
+				destreg = getReg(dest, lineNo)
+				asmout = asmout + "movl $" + str(int(operand1) and int(operand2)) + ", " + destreg + "\n"
+				# Update the address descriptor entry for dest variable to say where it is stored no
+				registerDescriptor[destreg]=dest
+				setlocation(dest, destreg)
+			elif integer(operand1) and not integer(operand2):
+				#case dest = 0 && x
+				# Get the register to store the dest
+				destreg = getReg(dest, lineNo)
+				location1 = getlocation(operand2)
+				# Move 5 to dest, dest = 5
+				asmout = asmout + "movl $" + operand1 + ", " + destreg + "\n"
+				#perform logical and, dest = dest >> x
+				if location1 != "mem":
+					asmout = asmout + "and " + location1 + ", " + destreg + "\n"
+				else:
+					asmout = asmout + "and " + operand2 + ", " + destreg + "\n"
+				registerDescriptor[destreg]=dest
+				setlocation(dest, destreg)				
+			elif not integer(operand1) and integer(operand2):
+				#case dest = a && 2
+				# Get the register to store the dest
+				destreg = getReg(dest, lineNo)
+				location1 = getlocation(operand1)
+				# Move a to destreg, dest = a
+				if location1 != "mem":
+					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
+				else:
+					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
+				# Perform Logical and dest = dest && 2
+				asmout = asmout + "and $" + destreg + ", " + operand2 + "\n"
+				registerDescriptor[destreg]=dest
+				setlocation(dest, destreg)				
+			elif not integer(operand1) and not integer(operand2):
+				#case dest = a && b
+				# Get the register to store the dest
+				destreg = getReg(dest, lineNo)
+				# Get the locations of the operands
+				location1 = getlocation(operand1)
+				location2 = getlocation(operand2)
+				if location1 != "mem" and location2 != "mem":
+					#dest = a and dest = dest && b
+					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
+					asmout = asmout + "and " + location2 + ", " + destreg + "\n"
+				elif location1 == "mem" and location2 != "mem":
+					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
+					asmout = asmout + "and " + operand2 + ", " + destreg + "\n"
+				elif location1 != "mem" and location2 == "mem":
+					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
+					asmout = asmout + "and " + location2 + ", " + destreg + "\n"
+				elif location1 == "mem" and location2 == "mem":
+					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
+					asmout = asmout + "and " + operand2 + ", " + destreg + "\n"					
+				# Update the register descriptor entry for destreg to say that it contains the dest
+				registerDescriptor[destreg]=dest
+				# Update the address descriptor entry for dest variable to say where it is stored now
+				setlocation(dest, destreg)
+		elif operator == "||":
+			#LineNo, ||, dest, op1, op2
+			dest = instruction[2]
+			operand1 = instruction[3]		#op1
+			operand2 = instruction[4]		#op2
+			if integer(operand1) and integer(operand2):
+				# Get the register to store the dest
+				destreg = getReg(dest, lineNo)
+				asmout = asmout + "movl $" + str(int(operand1) or int(operand2)) + ", " + destreg + "\n"
+				# Update the address descriptor entry for dest variable to say where it is stored no
+				registerDescriptor[destreg]=dest
+				setlocation(dest, destreg)
+			elif integer(operand1) and not integer(operand2):
+				#case dest = 0 || x
+				# Get the register to store the dest
+				destreg = getReg(dest, lineNo)
+				location1 = getlocation(operand2)
+				# Move 5 to dest, dest = 5
+				asmout = asmout + "movl $" + operand1 + ", " + destreg + "\n"
+				#perform logical and, dest = dest || x
+				if location1 != "mem":
+					asmout = asmout + "or " + destreg + ", " + location1 + "\n"
+				else:
+					asmout = asmout + "or " + operand2 + ", " + destreg + "\n"
+				registerDescriptor[destreg]=dest
+				setlocation(dest, destreg)				
+			elif not integer(operand1) and integer(operand2):
+				#case dest = a || 2
+				# Get the register to store the dest
+				destreg = getReg(dest, lineNo)
+				location1 = getlocation(operand1)
+				# Move a to destreg, dest = a
+				if location1 != "mem":
+					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
+				else:
+					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
+				# Perform Logical and dest = dest || 2
+				asmout = asmout + "or $" + operand2 + ", " + destreg + "\n"
+				registerDescriptor[destreg]=dest
+				setlocation(dest, destreg)				
+			elif not integer(operand1) and not integer(operand2):
+				#case dest = a || b
+				# Get the register to store the dest
+				destreg = getReg(dest, lineNo)
+				# Get the locations of the operands
+				location1 = getlocation(operand1)
+				location2 = getlocation(operand2)
+				if location1 != "mem" and location2 != "mem":
+					#dest = a and dest = dest || b
+					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
+					asmout = asmout + "or " + location2 + ", " + destreg + "\n"
+				elif location1 == "mem" and location2 != "mem":
+					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
+					asmout = asmout + "or " + operand2 + ", " + destreg + "\n"
+				elif location1 != "mem" and location2 == "mem":
+					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
+					asmout = asmout + "or " + location2 + ", " + destreg + "\n"
+				elif location1 == "mem" and location2 == "mem":
+					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
+					asmout = asmout + "or " + operand2 + ", " + destreg + "\n"					
+				# Update the register descriptor entry for destreg to say that it contains the dest
+				registerDescriptor[destreg]=dest
+				# Update the address descriptor entry for dest variable to say where it is stored now
+				setlocation(dest, destreg)
+
 
 		# elif operator == "call":
 
