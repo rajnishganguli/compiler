@@ -10,6 +10,8 @@ class TAC:
             self.code.append('=,'+str(lis[0])+','+str(lis[1]))
         if instrType == 'Arithmetic' or instrType == 'logical':
             self.code.append(str(lis[0])+','+str(lis[1])+','+str(lis[2])+','+str(lis[3]))
+        if instrType == 'LogicalNOT':
+            self.code.append(str(lis[0])+','+str(lis[1])+','+str(lis[2]))
         if instrType == 'print':
             self.code.append('print,'+str(lis[0]))
         if instrType == 'goto':

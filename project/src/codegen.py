@@ -1132,8 +1132,8 @@ def prodAsm(instruction):
 					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
 					asmout = asmout + "and " + location2 + ", " + destreg + "\n"
 				elif location1 == "mem" and location2 != "mem":
-					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
-					asmout = asmout + "and " + operand2 + ", " + destreg + "\n"
+					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
+					asmout = asmout + "and " + location2 + ", " + destreg + "\n"
 				elif location1 != "mem" and location2 == "mem":
 					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
 					asmout = asmout + "and " + location2 + ", " + destreg + "\n"
@@ -1207,6 +1207,33 @@ def prodAsm(instruction):
 				# Update the register descriptor entry for destreg to say that it contains the dest
 				registerDescriptor[destreg]=dest
 				# Update the address descriptor entry for dest variable to say where it is stored now
+				setlocation(dest, destreg)
+
+		elif operator == "!":
+			#LineNo, not, dest, op1
+			dest = instruction[2]
+			operand1 = instruction[3]
+			if integer(operand1):
+				#Case : dest = !(1)
+				# Get the register to store the dest
+				destreg = getReg(dest, lineNo)
+				asmout = asmout + "movl $" + str(not(int(operand1))) + ", " + destreg + "\n"
+				# Update the address descriptor entry for dest variable to say where it is stored no
+				registerDescriptor[destreg]=dest
+				setlocation(dest, destreg)
+			elif not integer(operand1):
+				#case dest = !(a)
+				# Get the register to store the dest
+				destreg = getReg(dest, lineNo)
+				location1 = getlocation(operand1)
+				# Move a to destreg, dest = a
+				if location1 != "mem":
+					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
+				else:
+					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
+				# Perform Logical and dest = !(dest)
+				asmout = asmout + "not " + destreg + "\n"
+				registerDescriptor[destreg]=dest
 				setlocation(dest, destreg)
 
 
