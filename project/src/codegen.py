@@ -20,6 +20,9 @@ varlist=[]
 global asmout
 asmout = ""
 
+global relcount
+relcount = 1
+
 def integer(number):
 		if number.isdigit() or (number[1:].isdigit() and (number[0] == "-" or number[0] == "+")):
 			return 1
@@ -65,6 +68,7 @@ def nextuse(var, line):
 
 def prodAsm(instruction):
 		global asmout
+		global relcount
 		asmout="" # final output of the assembly language
 		# tac expected format 
 		# < line number, operator, destination, source1, source2 > for the basic mathematical operations with the exception of ifgoto, goto etc.
@@ -377,62 +381,178 @@ def prodAsm(instruction):
 					asmout = asmout + "movl " + location + ", " + var + "\n"
 					setlocation(var,'mem')
 					registerDescriptor[location] = None
-
-	   #      elif operator == "ifgoto":
-
-		  #       	operatorin = instruction[2]
+		elif operator == "ifgoto":
+			for var in varlist:
+				location = getlocation(var)
+				if location != "mem":
+					asmout = asmout + "movl " + location + ", " + var + "\n"
+					setlocation(var, "mem")
+			operatorin = instruction[2]	
+			if operatorin == "==" or operatorin == ">=" or operatorin == "<=" or operatorin == ">" or operatorin == "<" or operatorin == "!=":
+				operand1 = instruction[3]
+				operand2 = instruction[4]
+				gotolocation = instruction[5]
+				if integer(operand1) and integer(operand2):
+				   	asmout = asmout + "cmp $" + operand2 + ", $" + operand1 + "\n"
+				elif not integer(operand1) and not integer(operand2):
+					location1 = getlocation(operand1)
+					location2 = getlocation(operand2)
+					destreg = getReg(operand1, lineNo)
+					if location1 != "mem":
+						asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
+					else:
+						asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
+					if location2 != "mem":
+						asmout = asmout + "cmp " + location2 + ", " + destreg + "\n"
+					else:
+						asmout = asmout + "cmp " + operand2 + ", " + destreg + "\n"
+					registerDescriptor[destreg] = operand1
+					setlocation(operand1, destreg)
+				elif not integer(operand1) and integer(operand2):
+				   	location1 = getlocation(operand1)
+					if location1 != "mem":
+						asmout = asmout + "cmp $" + operand2 + ", " + location1 + "\n"
+					else:
+						asmout = asmout + "cmp $" + operand2 + ", " + operand1 + "\n"
+				else:
+				   	location2 = getlocation(operand2)
+					if location2 != "mem":
+						asmout = asmout + "cmp $" + location2 + ", " + operand1 + "\n"
+					else:
+						asmout = asmout + "cmp $" + operand2 + ", " + operand1 + "\n"
 				
+				for var in varlist:
+					location = getlocation(var)
+					if location != "mem":
+						asmout = asmout + "movl " + location + ", " + var + "\n"
+						setlocation(var, "mem")
+				if operatorin == "==":
+				   	if(integer(gotolocation)):
+						asmout = asmout + "je  Loop" + gotolocation +"\n" 
+					else:
+						asmout = asmout + "je " + gotolocation +"\n"
+				elif operatorin == "<=":
+				   	if(integer(gotolocation)):
+						asmout = asmout + "jle  Loop" + gotolocation +"\n" 
+					else:
+						asmout = asmout + "jle " + gotolocation +"\n"
+				elif operatorin == "<":
+					if(integer(gotolocation)):
+						asmout = asmout + "jl  Loop" + gotolocation +"\n" 
+					else:
+						asmout = asmout + "jl " + gotolocation +"\n"
+				elif operatorin == ">=":
+				   	if(integer(gotolocation)):
+						asmout = asmout + "jge  Loop" + gotolocation +"\n" 
+					else:
+						asmout = asmout + "jge " + gotolocation +"\n"
+				elif operatorin == ">":
+				   	if(integer(gotolocation)):
+						asmout = asmout + "jg  Loop" + gotolocation +"\n" 
+					else:
+						asmout = asmout + "jg " + gotolocation +"\n"
+				elif operatorin == "!=":
+				   	if(integer(gotolocation)):
+						asmout = asmout + "jne  Loop" + gotolocation +"\n" 
+					else:
+						asmout = asmout + "jne " + gotolocation +"\n"	
+		elif operator == "goto":
+			destlocation = instruction[2]
+			for var in varlist:
+				location = getlocation(var)
+				if location != "mem":
+					asmout = asmout + "movl " + location + ", " + var + "\n"
+					setlocation(var, "mem")
+			if(integer(destlocation)):
+				asmout = asmout + "jmp  Loop" + destlocation +"\n"
+			else:
+				asmout = asmout + "jmp  " + destlocation +"\n"
+		elif operator == "label":
+			label = instruction[2]
+			asmout = asmout +  label + ":\n"
+		elif operator == '>':
+			dest = instruction[2]
+			operand1 = instruction[3]
+			operand2 = instruction[4]
+			LT = "LT"+str(relcount)
+			NLT = "NLT"+str(relcount)
+			if integer(operand1) and integer(operand2):
+				#case: dest = 4 < 5
+				# Get the register to store the dest
+				destreg = getReg(dest, lineNo)
+				asmout = asmout + "movl $" + str(int(int(operand1)>int(operand2))) + ", " + destreg + "\n"
+				# Update the address descriptor entry for dest variable to say where it is stored no
+				registerDescriptor[destreg]=dest
+				setlocation(dest, destreg)
+			elif integer(operand1) and not integer(operand2):
+				#case: dest = 5 < x
+				# Get the register to store the dest
+				destreg = getReg(dest, lineNo)
+				location2 = getlocation(operand2)
+				# Move the first operand to the destination register
+				asmout = asmout + "movl $" + operand1 + ", " + destreg + "\n"
+				if location2 != "mem":
+					asmout = asmout + "cmpl " + destreg + ", " + location2 + "\n"
+				else:
+					asmout = asmout + "cmpl " + destreg + ", " + operand2 + "\n"
+				asmout = asmout + "jg " + LT + "\n"
+				asmout = asmout + "movl $0, " + destreg + "\n"
+				asmout = asmout + "jmp " + NLT + "\n"
+				asmout = asmout + LT + ":" + "\n"
+				asmout = asmout + "movl $1, " + destreg + "\n"
+				asmout = asmout + NLT + ":" + "\n"
+				registerDescriptor[destreg]=dest
+				setlocation(dest, destreg)				
+			elif not integer(operand1) and integer(operand2):
+				# Get the register to store the dest
+				destreg = getReg(dest, lineNo)
+				location1 = getlocation(operand1)
+				# Move the first operand to the destination register
+				asmout = asmout + "movl $" + operand2 + ", " + destreg + "\n"
+				# Add the other operand to the register content
+				if location1 != "mem":
+					asmout = asmout + "cmpl " + location1 + ", " + destreg + "\n"
+				else:
+					asmout = asmout + "cmpl " + operand1 + ", " + destreg + "\n"
+				asmout = asmout + "jg " + LT + "\n"
+				asmout = asmout + "movl $0, " + destreg + "\n"
+				asmout = asmout + "jmp " + NLT + "\n"
+				asmout = asmout + LT + ":" + "\n"
+				asmout = asmout + "movl $1, " + destreg + "\n"
+				asmout = asmout + NLT + ":" + "\n"
+				registerDescriptor[destreg]=dest
+				setlocation(dest, destreg)				
+			elif not integer(operand1) and not integer(operand2):
+				# Get the register to store the dest
+				destreg = getReg(dest, lineNo)
+				# Get the locations of the operands
+				location1 = getlocation(operand1)
+				location2 = getlocation(operand2)
+				if location1 != "mem" and location2 != "mem":
+					asmout = asmout + "movl " + location1 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + location2 + ", " + destreg + "\n"
+				elif location1 == "mem" and location2 != "mem":
+					asmout = asmout + "movl " + operand1 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + location2 + ", " + destreg + "\n"
+				elif location1 != "mem" and location2 == "mem":
+					asmout = asmout + "movl " + operand2 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + destreg + ", " + location1 + "\n"
+				elif location1 == "mem" and location2 == "mem":
+					asmout = asmout + "movl " + operand2 + ", " + destreg + "\n"
+					asmout = asmout + "cmpl " + destreg + ", " + operand1 + "\n"					
+				# Update the register descriptor entry for destreg to say that it contains the dest
+				asmout = asmout + "jg " + LT + "\n"
+				asmout = asmout + "movl $0, " + destreg + "\n"
+				asmout = asmout + "jmp " + NLT + "\n"
+				asmout = asmout + LT + ":" + "\n"
+				asmout = asmout + "movl $1, " + destreg + "\n"
+				asmout = asmout + NLT + ":" + "\n"
+				registerDescriptor[destreg]=dest
+				# Update the address descriptor entry for dest variable to say where it is stored now
+				setlocation(dest, destreg)
+			relcount = relcount + 1
 
 
-				# if operatorin =="==" or operatorin==">=" or operatorin == "<=" or operatorin == ">" or operatorin == "<" or operatorin == "!=":
-				#    operand1 = instruction[3]
-				#    operand2 = instruction[4]
-				#    gotoloc = instruction[5]
-				#    if integer(operand1) and integer(operand2):
-				#    	destreg=getreg(operand1,instruction[0])
-				#    	asmout = asmout + "\t movl $" + operand1 + ", " + destreg + "\n"
-				#    	#reg[destreg]=int(operand1)
-				#    	asmout= asmout + "\t cmpl $" + operand2 +", " + destreg + "\n"
-				#    	reg[destreg]=operand1
-				#    elif not integer(operand1) and not integer(operand2):
-				#    	destreg=getreg(operand1,instruction[0])
-				#    	#regop1 = getreg(operand1)
-				#    	regop2 = getreg(operand2,instruction[0])
-				#    	reg[regop2]=operand2
-				#    	asmout = asmout + "\t movl " + operand1 + "," + destreg+ "\n"
-				#    	reg[destreg]=operand1
-				#    	asmout = asmout + "\t movl " + operand2 + "," + regop2 + "\n"
-				#    	asmout = asmout + "\t cmpl " + regop2 + "," + destreg + "\n"
-				#    	reg[destreg]= operand1 
-				#    elif not integer(operand1) and integer(operand2):
-				#    	destreg=getreg(operand1,instruction[0])
-				#    	asmout = asmout + "\t movl " + operand1 + "," + destreg+ "\n"
-				#    	reg[destreg]=operand1
-				#    	asmout = asmout + "\t cmpl $" + operand2 + "," + destreg + "\n"
-				#    	reg[destreg]= operand1
-				#    else: #op1 integer and op2 not integer
-				#    	destreg=getreg(operand2,instruction[0])
-				#    	asmout = asmout + "\t movl " + operand2 + "," + destreg+ "\n"
-				#    	reg[destreg]=operand2
-				#    	asmout = asmout + "\t cmpl $" + operand1 + "," + destreg + "\n"
-				#    	reg[destreg]= operand1
-				#    if operatorin == "==":
-				#    	asmout=asmout+"\t je  Loop"+gotoloc +"\n"
-
-				#    elif operatorin == "<=":
-				#    	asmout=asmout+"\t jle  Loop"+gotoloc +"\n"
-
-				#    elif operatorin == "<":
-				#    	asmout=asmout+"\t jl  Loop"+gotoloc +"\n"
-				   
-				#    elif operatorin == ">=":
-				#    	asmout=asmout+"\t jge  Loop"+gotoloc +"\n"
-				
-				#    elif operatorin == ">":
-				#    	asmout=asmout+"\t jg  Loop"+gotoloc +"\n"
-				
-				#    elif operatorin == "!=":
-				#    	asmout=asmout+"\t jne  Loop"+gotoloc +"\n"
 
 			 # 	elif operatorin == '&&'or operatorin == '&' :
 
@@ -526,10 +646,7 @@ def prodAsm(instruction):
 			 # 	   reg[destreg]=operand1
 			 # 	   asmout=asmout+"\t jnz  Loop"+gotoloc +"\n"
 			
-		# elif operator == "goto":
 
-		# 		destloc = instruction[2]
-		# 		asmout=asmout+"\t jmp  Loop"+destloc +"\n"
 
 		# elif operator == "call":
 
