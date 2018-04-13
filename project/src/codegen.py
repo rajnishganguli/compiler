@@ -1454,29 +1454,63 @@ def prodAsm(instruction):
 				asmout = asmout + "not " + destreg + "\n"
 				registerDescriptor[destreg]=dest
 				setlocation(dest, destreg)
+		elif operator == "function":
+			funcname = instruction[2]
+			asmout = asmout + ".globl " + funcname + "\n"
+			asmout = asmout + ".type "  + funcname + ", @function\n"
+			asmout = asmout + funcname + ":\n"
+			asmout = asmout + "pushl %ebp\n"
+			asmout = asmout + "movl %esp, %ebp\n"
+		elif operator == "call":
+			for var in varlist:
+				location = getlocation(var)
+				if location != "mem":
+					asmout = asmout + "movl " + location + ", " + var + "\n"
+					setlocation(var, "mem")
+					registerDescriptor[location] = None
+			funcname = instruction[2]
+			asmout = asmout + "call "+ funcname + '\n'
+		elif operator == "param":
+			#lineNo,param,val
+			val = instruction[2]
+			if integer(val):
+				val = "$" + val
+			else:
+				location = getlocation(val)
+				if location != "mem":
+					val = addressDescriptor[val]
+			asmout = asmout + "pushl " + val + "\n"
+		elif operator == "funcarg":
+			#linNo,funcarg,a,i
+			a = instruction[2]
+			i = instruction[3]
+			displacement = 4*(int(i)+1) + 4
+			location = getlocation(a)
+			if location == 'mem':
+				destreg = getReg(a, lineNo)
+				registerDescriptor[destreg] = a
+				setlocation(a, destreg)
+				location = destreg
 
-
-		# elif operator == "call":
-
-		# 		funcname = instruction[2]
-
-				
-		# 		#if (instruction[3] != NULL and integer(instruction[3]):
-		# 		#	asmout = asmout + "pushl $" int(instruction[3])
-		# 		#elif (instruction[3] !=NULL):
-		# 		#	asmout = asmout + "pushl " + instruction[3]
-		# 		#asmout = asmout +"\t pushl %ebp\n\t movl %ebp, %esp\n"
-		# 		asmout = asmout + "\t call "+funcname + '\n'
-		# 		asmout = asmout + "\t addl $0, %esp\n"
-
-		# elif operator == 'return':
-
-		# 	 	#return value is supposed to be in rax register
-
-		# 	 	#asmout = asmout + "\t movl %ebp, %esp\n\t popl %ebp \n"
-		# 	 	asmout = asmout + "\t ret \n"
-
-
+			asmout = asmout + "movl " + str(displacement) + "(%ebp), " + location + "\n"
+			asmout = asmout + "movl " + location + ", " + a + "\n"
+			registerDescriptor[location] = None
+			addressDescriptor[a] = 'mem'
+		elif operator == 'return':
+			val = instruction[2]
+			for var in varlist:
+				location = getlocation(var)
+				if location == "%eax":
+					asmout = asmout + "movl " + location + ", " + var + "\n"
+					setlocation(var, "mem")
+					break
+			if integer(val):
+				val = "$" + val
+			asmout = asmout + "movl " + val + ", %eax\n"
+			asmout = asmout + "movl %ebp, %esp\n"
+			asmout = asmout + "popl %ebp\n"
+			asmout = asmout + "ret\n"
+			setlocation(val, '%eax')
 		elif operator == 'endOfCode':
 			asmout = asmout + "movl $1, %eax \nmovl $0, %ebx \nint $0x80"
 		elif operator == "print":
@@ -1519,7 +1553,7 @@ nextuseTable = [None for i in range(len(data))]
 # print nextuseTable
 
 for i in range(0,len(data)):
-	if data[i][1] not in ['call','label','return','endOfCode','goto','ifgoto','print','function','param','funcarg']:
+	if data[i][1] not in ['call','label','return','endOfCode','goto','ifgoto','function']:
 		varlist = varlist + data[i]
 
 varlist = list(set(varlist))

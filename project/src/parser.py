@@ -249,9 +249,9 @@ def p_statement_definition_5(p):
 def p_statement_definition_6(p):
     '''statement : if_else_statement'''
     p[0] = p[1]
-def p_if_cond_0(p):
-    '''if_cond :  TYPE_BOOLEAN'''
-    p[0] = p[1]
+# def p_if_cond_0(p):
+#     '''if_cond :  TYPE_BOOLEAN'''
+#     p[0] = p[1]
 def p_if_cond_1(p):
     '''if_cond :  rightside'''
     p[0] = p[1]
