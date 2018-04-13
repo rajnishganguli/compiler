@@ -123,6 +123,18 @@ def p_M_12(p):
 
 def p_M_11(p):
     '''M_11 : '''
+    indexoffuncdef = TAC.code.index('function,'+p[-8]["fname"])
+    no_of_args = 0
+    indices = [i for i, x in enumerate(TAC.code) if x == 'call,'+p[-8]["fname"]]
+    for indexoffunccall in indices:
+        index1 = indexoffunccall + 1 + no_of_args
+        index2 = indexoffuncdef
+        index2 = index2 + 1
+        while (TAC.code[index2].startswith('funcarg')):
+            TAC.code.insert(index1,TAC.code[index2])
+            index1 = index1 + 1
+            index2 = index2 + 1
+            no_of_args += 1
     # TAC.emit("return", [0])
     TAC.emit("label", [p[-8]["label"]])
 

@@ -907,12 +907,6 @@ def prodAsm(instruction):
 				setlocation(dest, destreg)
 			relcount = relcount + 1
 		elif operator == '==':
-			for var in varlist:
-				location = getlocation(var)
-				if location != "mem":
-					asmout = asmout + "movl " + location + ", " + var + "\n"
-					setlocation(var, "mem")
-					registerDescriptor[location] = None
 			dest = instruction[2]
 			operand1 = instruction[3]
 			operand2 = instruction[4]
@@ -965,9 +959,7 @@ def prodAsm(instruction):
 				registerDescriptor[destreg]=dest
 				setlocation(dest, destreg)				
 			elif not integer(operand1) and not integer(operand2):
-				# Get the register to store the dest
 				destreg = getReg(dest, lineNo)
-				# Get the locations of the operands
 				location1 = getlocation(operand1)
 				location2 = getlocation(operand2)
 				if location1 != "mem" and location2 != "mem":
@@ -981,8 +973,7 @@ def prodAsm(instruction):
 					asmout = asmout + "cmpl " + location1 + ", " + destreg + "\n"
 				elif location1 == "mem" and location2 == "mem":
 					asmout = asmout + "movl " + operand2 + ", " + destreg + "\n"
-					asmout = asmout + "cmpl " + operand1 + ", " + destreg + "\n"					
-				# Update the register descriptor entry for destreg to say that it contains the dest
+					asmout = asmout + "cmpl " + operand1 + ", " + destreg + "\n"
 				asmout = asmout + "je " + LT + "\n"
 				asmout = asmout + "movl $0, " + destreg + "\n"
 				asmout = asmout + "jmp " + NLT + "\n"
@@ -990,9 +981,14 @@ def prodAsm(instruction):
 				asmout = asmout + "movl $1, " + destreg + "\n"
 				asmout = asmout + NLT + ":" + "\n"
 				registerDescriptor[destreg]=dest
-				# Update the address descriptor entry for dest variable to say where it is stored now
 				setlocation(dest, destreg)
 			relcount = relcount + 1
+			for var in varlist:
+				location = getlocation(var)
+				if location != "mem":
+					asmout = asmout + "movl " + location + ", " + var + "\n"
+					setlocation(var, "mem")
+					registerDescriptor[location] = None
 		elif operator == '!=':
 			for var in varlist:
 				location = getlocation(var)
