@@ -91,9 +91,9 @@ def p_arg_list_definition_1(p):
     '''arg_list : IDENTIFIER M_9 SEP_COMMA arg_list
     			| IDENTIFIER M_9'''
     if(len(p)==3):
-    	p[0]=1
+        p[0]= [p[1]]
     else:
-    	p[0]=p[4]+1
+        p[0]=[p[1]]+ p[4]
 def p_M_9(p):
     '''M_9 : '''
     vardict = globalST.varlookup(p[-1])
@@ -104,14 +104,16 @@ def p_M_9(p):
     global no_special_reg
     if(no_special_reg > 3):
         print("no of arguments greater than 4")
-    TAC.emit("func_arg", [p[-1], no_special_reg])
     no_special_reg += 1
 
 def p_M_10(p):
     '''M_10 : '''
     global no_special_reg
     no_special_reg = 0
-    globalST.funcinsert(p[-5]["fname"],{"num":p[-1]})
+    globalST.funcinsert(p[-5]["fname"],{"num":len(p[-1])})
+    for i in reversed(p[-1]):
+        TAC.emit("func_arg", [i, no_special_reg])
+        no_special_reg += 1
 
 def p_M_12(p):
     '''M_12 : '''
@@ -121,7 +123,7 @@ def p_M_12(p):
 
 def p_M_11(p):
     '''M_11 : '''
-    TAC.emit("return", [0])
+    # TAC.emit("return", [0])
     TAC.emit("label", [p[-8]["label"]])
 
 def p_M_13(p):
@@ -194,6 +196,10 @@ def p_M_8(p):
 def p_function_call(p):
     '''function_call : fname2 BR_LCIR arg_to_pass BR_RCIR M_14'''
     TAC.emit('call', [p[1],''])
+    TAC.emit('pop', [p[3]])
+    temp_name = ST.newtemp({"type" : 'int'})
+    TAC.emit('retval', [temp_name])
+    p[0] = {'place':temp_name, 'type':'int'}
 def p_fname_2(p):
     '''fname2 : IDENTIFIER'''
     p[0] = p[1]
@@ -549,7 +555,9 @@ def p_math_rightside_10(p):
 def p_math_rightside_11(p):
     '''rightside : any_type'''
     p[0] = p[1]
-
+def p_math_rightside_12(p):
+    '''rightside : function_call'''
+    p[0] = p[1]
 def p_math_rightside_13(p):
     '''rightside : IDENTIFIER BR_LCSR rightside BR_RCSR'''
     temp_name1 = ST.newtemp({"type":"int"})

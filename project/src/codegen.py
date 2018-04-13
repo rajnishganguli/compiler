@@ -14,7 +14,7 @@ registerDescriptor={}
 registerDescriptor = registerDescriptor.fromkeys(reg)
 regalwaysinuse={'%esp':None,"%ebp":None}
 addressDescriptor = {}
-operators = ['+','-','*','/','=','==','<=','>=','>','<','%',"&&","||",'&','|',"!=",'!',"ifgoto","goto","call","return","label","print","endOfCode","function","funcarg","param"]
+operators = ['+','-','*','/','=','==','<=','>=','>','<','%',"&&","||",'&','|',"!=",'!',"ifgoto","goto","call","return","label","print","endOfCode","function","funcarg","param","pop","retval"]
 varlist=[]
 
 global asmout
@@ -1496,6 +1496,16 @@ def prodAsm(instruction):
 			asmout = asmout + "movl " + location + ", " + a + "\n"
 			registerDescriptor[location] = None
 			addressDescriptor[a] = 'mem'
+		elif operator == "pop":
+			#lineNo, pop, n
+			n = instruction[2]
+			asmout = asmout + "movl $4, %edi\n"
+			for i in range(int(n)):
+				asmout = asmout + "addl %edi, %esp\n"
+		elif operator == 'retval':
+			#lineNo, retval, n
+			val = instruction[2]
+			asmout = asmout + "movl %eax, " + val + "\n"
 		elif operator == 'return':
 			val = instruction[2]
 			for var in varlist:

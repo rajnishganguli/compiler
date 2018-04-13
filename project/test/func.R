@@ -1,6 +1,7 @@
 inc <- function (x,y,t)
 {
-	z = y * t
-	print(z)
+	z = x * y * t
+	return(z)
 }
-inc(2,4,10)
+val = inc(2,4,10)
+print(val)

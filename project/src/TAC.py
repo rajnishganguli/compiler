@@ -28,6 +28,10 @@ class TAC:
             self.code.append('funcarg,'+str(lis[0])+','+str(lis[1]))
         if instrType == 'param':
             self.code.append('param,'+str(lis[0]))
+        if instrType == 'pop':
+            self.code.append('pop,'+str(lis[0]))
+        if instrType == 'retval':
+            self.code.append('retval,'+str(lis[0]))
         if instrType == 'vector':
             self.code.append('vector,'+str(lis[0]) + ',' + str(lis[1]))
         if instrType == 'member':
