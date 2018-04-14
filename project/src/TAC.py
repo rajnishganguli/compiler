@@ -36,6 +36,8 @@ class TAC:
             self.code.append('vector,'+str(lis[0]) + ',' + str(lis[1]))
         if instrType == 'member':
             self.code.append('member,'+str(lis[0]) + ',' + str(lis[1]) + ',' + str(lis[2]))
+        if instrType == 'update':
+            self.code.append('update,'+str(lis[0]) + ',' + str(lis[1]) + ',' + str(lis[2]))
         if instrType == 'call':
             if (lis[1]==''):
                 self.code.append('call,'+str(lis[0]))

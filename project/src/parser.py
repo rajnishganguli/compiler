@@ -57,11 +57,59 @@ def p_if_else_statement_definition_2(p):
 def p_if_statement_definition(p):
     '''if_statement : KEYWORD_IF BR_LCIR if_cond BR_RCIR M_1 compound_statement M_3'''
 
+def p_M_1(p):
+    '''M_1 : '''
+    label_name = ST.newlabel()
+    TAC.emit("ifgoto", ["==", p[-2]["place"], "0", label_name])
+    p[0] = {"label": label_name}
+def p_M_2(p):
+    '''M_2 : '''
+    label_name = ST.newlabel()
+    TAC.emit("goto", [label_name])
+    TAC.emit("label", [p[-3]["label"]])
+    p[0] = {"label": label_name}
+def p_M_3(p):
+    '''M_3 : '''
+    TAC.emit("label",[p[-2]["label"]]) 
+
 def p_while_loop(p):
     '''while_loop : KEYWORD_WHILE BR_LCIR M_4 if_cond BR_RCIR M_5 compound_statement M_6'''
 
+def p_M_4(p):
+    '''M_4 : '''
+    label_name = ST.newlabel()
+    TAC.emit("label",[label_name])
+    p[0] = {"label" : label_name}
+def p_M_5(p):
+    '''M_5 : '''
+    label_name = ST.newlabel()
+    TAC.emit("ifgoto", ["==", p[-2]["place"], "0", label_name])
+    p[0] = {"label": label_name}
+def p_M_6(p):
+    '''M_6 : '''
+    TAC.emit("goto", [p[-5]["label"]])
+    TAC.emit("label", [p[-2]["label"]])
+
 def p_for_loop(p):
     '''for_loop : KEYWORD_FOR BR_LCIR IDENTIFIER KEYWORD_IN for_range BR_RCIR M_7 compound_statement M_8'''
+
+def p_M_7(p):
+    '''M_7 : '''
+    temp_name = ST.newtemp({})
+    TAC.emit("Assignment", [temp_name, p[-2][0]])
+    label_name = ST.newlabel()
+    TAC.emit("label", [label_name])
+    p[0] = {"label1": label_name, "iter": temp_name}
+    label_name2 = ST.newlabel()
+    TAC.emit("ifgoto", [">", temp_name, p[-2][1], label_name2])
+    ST.varinsert(p[-4], {"type":"int", "declare": True})
+    TAC.emit("Assignment", [p[-4], temp_name])
+    p[0]["label2"] = label_name2
+def p_M_8(p):
+    '''M_8 : '''
+    TAC.emit("Arithmetic", ["+", p[-2]["iter"], p[-2]["iter"], "1"])
+    TAC.emit("goto", [p[-2]["label1"]])
+    TAC.emit("label", [p[-2]["label2"]])
 
 def p_function_definition_1(p):
     '''function_definition : fname OP_FUNC_ASGN KEYWORD_FUNCTION BR_LCIR arg_list M_10 BR_RCIR compound_statement M_11
@@ -135,75 +183,12 @@ def p_M_11(p):
             index1 = index1 + 1
             index2 = index2 + 1
             no_of_args += 1
-    # TAC.emit("return", [0])
     TAC.emit("label", [p[-8]["label"]])
 
 def p_M_13(p):
     '''M_13 : '''
     TAC.emit("return", [0])
     TAC.emit("label", [p[-7]["label"]])
-
-def p_M_1(p):
-	'''M_1 : '''
-	label_name = ST.newlabel()
-	TAC.emit("ifgoto", ["==", p[-2]["place"], "0", label_name])
-	p[0] = {"label": label_name}
-
-def p_M_2(p):
-    '''M_2 : '''
-    label_name = ST.newlabel()
-    TAC.emit("goto", [label_name])
-    TAC.emit("label", [p[-3]["label"]])
-    p[0] = {"label": label_name}
-
-def p_M_3(p):
-    '''M_3 : '''
-    TAC.emit("label",[p[-2]["label"]])
-    # for label in p[-3]:
-    #     TAC.emit("label",[label]) 
-
-def p_M_4(p):
-    '''M_4 : '''
-    label_name = ST.newlabel()
-    TAC.emit("label",[label_name])
-    p[0] = {"label" : label_name}
-
-def p_M_5(p):
-    '''M_5 : '''
-    label_name = ST.newlabel()
-    TAC.emit("ifgoto", ["==", p[-2]["place"], "0", label_name])
-    p[0] = {"label": label_name}
-
-def p_M_6(p):
-    '''M_6 : '''
-    TAC.emit("goto", [p[-5]["label"]])
-    TAC.emit("label", [p[-2]["label"]])
-    # for i in p[-3]:
-    #     TAC.emit("label", [i])
-
-def p_M_7(p):
-    '''M_7 : '''
-    temp_name = ST.newtemp({})
-    # print p[-2]
-    TAC.emit("Assignment", [temp_name, p[-2][0]])
-    label_name = ST.newlabel()
-    TAC.emit("label", [label_name])
-    p[0] = {"label1": label_name, "iter": temp_name}
-    label_name2 = ST.newlabel()
-    TAC.emit("ifgoto", [">", temp_name, p[-2][1], label_name2])
-    ST.varinsert(p[-4], {"type":"int", "declare": True})
-    TAC.emit("Assignment", [p[-4], temp_name])
-    p[0]["label2"] = label_name2
-
-def p_M_8(p):
-    '''M_8 : '''
-    TAC.emit("Arithmetic", ["+", p[-2]["iter"], p[-2]["iter"], "1"])
-    TAC.emit("goto", [p[-2]["label1"]])
-    TAC.emit("label", [p[-2]["label2"]])
-    # TAC.emit("Assignment", [p[-6], p[-2]["iter"]])
-    # if(isinstance(p[-3],list)):
-    #     for i in p[-3]:
-    #         TAC.emit("label", [i])
 
 def p_function_call(p):
     '''function_call : fname2 BR_LCIR arg_to_pass BR_RCIR M_14'''
@@ -267,29 +252,20 @@ def p_statement_definition_5(p):
 def p_statement_definition_6(p):
     '''statement : if_else_statement'''
     p[0] = p[1]
-# def p_if_cond_0(p):
-#     '''if_cond :  TYPE_BOOLEAN'''
-#     p[0] = p[1]
+
 def p_if_cond_1(p):
-    '''if_cond :  rightside'''
+    '''if_cond :  comparison_statement
+                | rightside'''
     p[0] = p[1]
+
 def p_if_cond_2(p):
-    '''if_cond :  comparison_statement'''
-    p[0] = p[1]
+    '''if_cond : comparison_statement logop if_cond
+                | comparison_statement bitop if_cond'''
+    temp_name = ST.newtemp({"type" : p[3]["type"]})
+    TAC.emit('logical',[p[2],temp_name, p[1]['place'], p[3]['place']])
+    p[0] = {"place": temp_name, "type": p[3]["type"]}
 
 def p_if_cond_3(p):
-    '''if_cond : comparison_statement logop if_cond'''
-    temp_name = ST.newtemp({"type" : p[3]["type"]})
-    TAC.emit('Arithmetic',[p[2],temp_name, p[1]['place'], p[3]['place']])
-    p[0] = {"place": temp_name, "type": p[3]["type"]}
-
-def p_if_cond_4(p):
-    '''if_cond : comparison_statement bitop if_cond '''
-    temp_name = ST.newtemp({"type" : p[3]["type"]})
-    TAC.emit('Arithmetic',[p[2],temp_name, p[1]['place'], p[3]['place']])
-    p[0] = {"place": temp_name, "type": p[3]["type"]}
-
-def p_if_cond_5(p):
     '''if_cond : OP_BITNOT if_cond '''
     temp_name = ST.newtemp({"type" : p[2]["type"]})
     TAC.emit('logicalNOT',[p[1],temp_name, p[2]['place']])
@@ -414,9 +390,7 @@ def p_expression_math_0(p):
     temp_name = ST.newtemp({"type":"int"})
     TAC.emit('Assignment',[temp_name1,p[3]['place']])
     TAC.emit('Arithmetic',['*',temp_name2,temp_name1,'4'])
-    TAC.emit('member',[temp_name,p[1],temp_name2])
-    TAC.emit('Assignment',[temp_name,p[6]['place']])
-    p[0] = {'place':temp_name,'type':'int'}
+    TAC.emit('update',[p[6]['place'],p[1],temp_name2])
 
 def p_expression_math_1(p):
 	'''expression : IDENTIFIER OP_ASGN rightside'''
@@ -443,7 +417,11 @@ def p_M_16(p):
     '''M_16 : '''
     TAC.emit('vector', [p[-3], len(p[-1])])
     for i in range(len(p[-1])):
-        TAC.emit('Arithmetic', ['=', p[-3], str(i),p[-1][i]])
+        temp_name1 = ST.newtemp({'type':'int'})
+        temp_name2 = ST.newtemp({'type':'int'})
+        TAC.emit('Assignment', [temp_name1, i])
+        TAC.emit('Arithmetic', ['*', temp_name2, temp_name1,'4'])
+        TAC.emit('update', [p[-1][i], p[-3],temp_name2])
 # def p_expression_math_3(p):
 #     '''expression : jump_statements'''
 #     p[0] = p[1]
@@ -455,15 +433,15 @@ def p_expression_math_4(p):
 def p_expression_math_5(p):
     '''expression : KEYWORD_RETURN BR_LCIR rightside BR_RCIR'''
     TAC.emit('return',[p[3]['place']]) 
-def p_vector_2(p):
+
+def p_vector_definition_1(p):
     '''vector_definition : KEYWORD_VECTOR BR_LCIR SEP_COMMA TYPE_INTEGER BR_RCIR'''
     p[0] = []
     for i in range(p[4]):
         p[0] = p[0] + [0]
-def p_vector_4(p):
+def p_vector_definition_2(p):
     '''vector_definition : KEYWORD_VECTOR_CONSTRUCTOR BR_LCIR vector_elements BR_RCIR'''
     p[0] = p[3]
-    # print p[0]
 def p_vector_elements(p):
     '''vector_elements : vector_elements SEP_COMMA TYPE_INTEGER
                         | TYPE_INTEGER'''

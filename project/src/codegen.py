@@ -14,9 +14,9 @@ registerDescriptor={}
 registerDescriptor = registerDescriptor.fromkeys(reg)
 regalwaysinuse={'%esp':None,"%ebp":None}
 addressDescriptor = {}
-operators = ['+','-','*','/','=','==','<=','>=','>','<','%',"&&","||",'&','|',"!=",'!',"ifgoto","goto","call","return","label","print","endOfCode","function","funcarg","param","pop","retval"]
+operators = ['+','-','*','/','=','==','<=','>=','>','<','%',"&&","||",'&','|',"!=",'!',"ifgoto","goto","call","return","label","print","endOfCode","function","funcarg","param","pop","retval","vector","member","update"]
 varlist=[]
-
+vectorlist=[]
 global asmout
 asmout = ""
 
@@ -137,12 +137,12 @@ def prodAsm(instruction):
 			   		asmout = asmout + "addl " + operand2 + ", " + destreg + "\n"
 			   	registerDescriptor[destreg] = dest
 			   	setlocation(dest, destreg)
-			for var in varlist:
-				location = getlocation(var)
-				if location != 'mem':
-					asmout = asmout + "movl " + location + ", " + var + "\n"
-					setlocation(var,'mem')
-					registerDescriptor[location] = None
+			# for var in varlist:
+			# 	location = getlocation(var)
+			# 	if location != 'mem':
+			# 		asmout = asmout + "movl " + location + ", " + var + "\n"
+			# 		setlocation(var,'mem')
+			# 		registerDescriptor[location] = None
 		elif operator == '-':
 		 	dest = instruction[2]
 			operand1 = instruction[3]
@@ -240,12 +240,12 @@ def prodAsm(instruction):
 			# asmout = asmout + "movl %eax, " + dest + "\n"
 			# registerDescriptor['%eax'] = None
 			# addressDescriptor[dest] = 'mem'
-			for var in varlist:
-				location = getlocation(var)
-				if location != 'mem':
-					asmout = asmout + "movl " + location + ", " + var + "\n"
-					setlocation(var,'mem')
-					registerDescriptor[location] = None
+			# for var in varlist:
+			# 	location = getlocation(var)
+			# 	if location != 'mem':
+			# 		asmout = asmout + "movl " + location + ", " + var + "\n"
+			# 		setlocation(var,'mem')
+			# 		registerDescriptor[location] = None
 		elif operator == '/':
 			dest = instruction[2]
 			operand1 = instruction[3]
@@ -1518,7 +1518,7 @@ def prodAsm(instruction):
 			asmout = asmout + "ret\n"
 			setlocation(val, '%eax')
 		elif operator == 'endOfCode':
-			asmout = asmout + "movl $1, %eax \nmovl $0, %ebx \nint $0x80"
+			asmout = asmout + "movl $1, %eax \nmovl $0, %ebx \nint $0x80"	
 		elif operator == "print":
 			tobeprint = instruction[2]
 			if integer(tobeprint):
@@ -1535,9 +1535,55 @@ def prodAsm(instruction):
 					asmout = asmout + "pushl " + tobeprint + "\n"
 					asmout = asmout + "pushl $prtsrt\n"
 					asmout = asmout + "call printf\n"					
-		   
-		# #return asmout
+		elif operator == "vector":
+			#lineNo,vector,vectorname,vectorlength
+			name = instruction[2]
+			length = instruction[3]
+			vectorlist.append((name,int(length)))
+		elif operator == "member":
+			#lineNo,member,dest,vectorname,offset
+			dest = instruction[2]
+			name = instruction[3]
+			offset = instruction[4]
+			destreg = getReg(dest, lineNo)
+			off = getReg(offset, lineNo)
 
+			asmout = asmout + "movl " + name + "(%eax), " + destreg +"\n"
+
+			registerDescriptor[off] = offset
+			setlocation(offset, off)
+			registerDescriptor[destreg] = dest
+			setlocation(dest, destreg)
+
+			asmout = asmout + "movl " + destreg + ", " + dest + "\n"
+			registerDescriptor[destreg] = None
+			addressDescriptor[dest] = 'mem'
+
+		elif operator == "update":
+			#lineNo,update,assignvalue,vectorname,offset
+			assignvalue = instruction[2]
+			name = instruction[3]
+			offset = instruction[4]
+			off = getReg(offset, lineNo)
+			
+			if(integer(assignvalue)):
+				asmout = asmout + "movl $" + assignvalue + ", " + name + "(%eax)\n"
+			else:
+				loc2 = getlocation(assignvalue)
+				if(loc2 != "mem"):
+					asmout = asmout + "movl " + loc2 + ", " + name + "(%eax)\n"
+				else:
+					regdest = getReg(assignvalue, lineNo)
+					asmout = asmout + "movl " + assignvalue + ", " + regdest + "\n"
+					registerDescriptor[regdest] = assignvalue
+
+					setlocation(assignvalue, regdest)
+					asmout = asmout + "movl " + regdest + ", " + name + "(%eax)\n"
+
+			registerDescriptor[off]= offset
+			setlocation(offset, off)
+		# #return asmout
+#---------------------------------------------------------------------------------------------------------
 def Input_Data() :
 	i=0
 	matrix = []
@@ -1551,7 +1597,6 @@ def Input_Data() :
 			for j in range(0,len(currentline)):
 				matrix[i].append(currentline[j])
 			i = i+1
-
 	return matrix
 
 data = Input_Data()
@@ -1559,7 +1604,7 @@ nextuseTable = [None for i in range(len(data))]
 # print nextuseTable
 
 for i in range(0,len(data)):
-	if data[i][1] not in ['call','label','return','endOfCode','goto','ifgoto','function']:
+	if data[i][1] not in ['call','label','return','endOfCode','goto','ifgoto','function','vector','member','update']:
 		varlist = varlist + data[i]
 
 varlist = list(set(varlist))
@@ -1571,8 +1616,6 @@ for word in operators:
 
 addressDescriptor = addressDescriptor.fromkeys(varlist, "mem")
 symbolTable = addressDescriptor.fromkeys(varlist, ["live", None])
-
-
 
 leaders = [1,]
 for i in range(0,len(data)):
@@ -1646,12 +1689,13 @@ for BasicBlock in BasicBlocks:
 			if y in variables:
 				symbolTable[y] = ["live", instrnumber]
 
-##################################################################################
+#-----------------------------------------------------------------------------------------------------------------------
+
 data_section = ".section .data\n"
 for var in varlist:
 	data_section = data_section + var + ":\t" + ".int 0\n"
 data_section = data_section +'\n'
-	#bss_section = ".section .bss\n\n"
+
 text_section = ".section .text\n\n" + "inptstr: .asciz \"%d\" \n" + "prtsrt:  .asciz \"%d\\n\" \n.globl main\n\n" +  "main:\n"
 
 for BasicBlock in BasicBlocks:
@@ -1660,12 +1704,13 @@ for BasicBlock in BasicBlocks:
 		for i in BasicBlock:		
 			prodAsm(data[int(i)-1])
 			text_section = text_section + asmout
+for (var, length) in vectorlist:
+	data_section = data_section + var + ":\n.int " 
+	for i in range(1,(length+1)):
+		if(i != length):
+			data_section = data_section + "0, "
+		else:
+			data_section = data_section + "0\n"
 
-#--------------------------------------------------------------------------------------------------
-# Priniting the final output
-# print("asmout Code (x86) for: [" + filename + "]")
-# print("--------------------------------------------------------------------")
 asmoutcode = data_section + text_section
-# print nextuseTable
-print(asmoutcode) 
-# print("--------------------------------------------------------------------")
+print(asmoutcode)
