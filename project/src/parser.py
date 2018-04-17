@@ -341,7 +341,8 @@ def p_expression(p):
                     | IDENTIFIER OP_ASGN rightside
                     | IDENTIFIER OP_ASGN vector_definition M_16
                     | KEYWORD_PRINT BR_LCIR rightside BR_RCIR
-                    | KEYWORD_RETURN BR_LCIR rightside BR_RCIR'''
+                    | KEYWORD_RETURN BR_LCIR rightside BR_RCIR
+                    | IDENTIFIER OP_ASGN KEYWORD_READLINE BR_LCIR BR_RCIR'''
     if(len(p)==7):
         temp_name1 = ST.newtemp({"type":"int"})
         temp_name2 = ST.newtemp({"type":"int"})
@@ -357,7 +358,16 @@ def p_expression(p):
                 ST.varinsert(p[1], {"type":p[3]['type'], "declare": True})
                 var_dict = {"type":p[3]['type'], "declare": True}
         TAC.emit('Assignment', [p[1], p[3]['place']])
-        p[0] = {"place":p[1], "type": var_dict["type"]}      
+        p[0] = {"place":p[1], "type": var_dict["type"]}
+    elif(len(p)==6):
+        var_dict = ST.varlookup(p[1])
+        if(var_dict == False):
+            var_dict = globalST.varlookup(p[1])
+            if (var_dict == False):
+                ST.varinsert(p[1], {"type":'int', "declare": True})
+                var_dict = {"type":'int', "declare": True}
+        TAC.emit('read', [p[1]])
+        p[0] = {"place":p[1], "type": var_dict["type"]}     
     else:
         if(p[1]=='print'):
             TAC.emit('print',[p[3]['place']])

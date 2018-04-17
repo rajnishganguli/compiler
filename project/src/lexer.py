@@ -18,7 +18,8 @@ keywords = {
     'return':'KEYWORD_RETURN',
     'print':'KEYWORD_PRINT',
     'c':'KEYWORD_VECTOR_CONSTRUCTOR',
-    'vector':'KEYWORD_VECTOR'  
+    'vector':'KEYWORD_VECTOR',
+    'readline':'KEYWORD_READLINE'  
     }
 
 tokens = ['OP_FUNC_ASGN','BR_LCSR','BR_RCSR','BR_LCIR', 'BR_LCUR',  'BR_RCIR' ,'BR_RCUR',  'IDENTIFIER', 'OP_ASGN', 'OP_BITAND','OP_BITNOT', 'OP_BITOR', 'OP_COMP', 'OP_DIVIDE', 'OP_EXPO', 'OP_GREQ', 'OP_GREAT', 'OP_LEEQ', 'OP_LESS', 'OP_LOGAND', 'OP_LOGOR', 'OP_MINUS', 'OP_MULT', 'OP_NOEQ',  'OP_PLUS',  'OP_REMDR', 'SEP_COLON', 'SEP_COMMA',  'TYPE_INTEGER', 'TYPE_BOOLEAN','TYPE_STRING','TYPE_NUMERIC'] + list(keywords.values())

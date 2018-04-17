@@ -14,7 +14,7 @@ registerDescriptor={}
 registerDescriptor = registerDescriptor.fromkeys(reg)
 regalwaysinuse={'%esp':None,"%ebp":None}
 addressDescriptor = {}
-operators = ['+','-','*','/','=','==','<=','>=','>','<','%',"&&","||",'&','|',"!=",'!',"ifgoto","goto","call","return","label","print","endOfCode","function","funcarg","param","pop","retval","vector","member","update"]
+operators = ['+','-','*','/','=','==','<=','>=','>','<','%',"&&","||",'&','|',"!=",'!',"ifgoto","goto","call","return","label","print","endOfCode","function","funcarg","param","pop","retval","vector","member","update","read"]
 varlist=[]
 vectorlist=[]
 global asmout
@@ -1582,6 +1582,16 @@ def prodAsm(instruction):
 
 			registerDescriptor[off]= offset
 			setlocation(offset, off)
+		elif operator == "read":
+			for var in varlist:
+				loc = getlocation(var)
+				if loc != "mem":
+					asmout = asmout + "movl " + loc + ", " + var + "\n"
+					setlocation(var, "mem")
+			dest = instruction[2]
+			asmout = asmout + "pushl $"+ dest +"\n"
+			asmout = asmout + "pushl $inptstr \n"
+			asmout = asmout + "call scanf \n"
 		# #return asmout
 #---------------------------------------------------------------------------------------------------------
 def Input_Data() :

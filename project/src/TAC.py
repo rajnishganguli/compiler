@@ -38,6 +38,8 @@ class TAC:
             self.code.append('member,'+str(lis[0]) + ',' + str(lis[1]) + ',' + str(lis[2]))
         if instrType == 'update':
             self.code.append('update,'+str(lis[0]) + ',' + str(lis[1]) + ',' + str(lis[2]))
+        if instrType == 'read':
+            self.code.append('read,'+str(lis[0]))
         if instrType == 'call':
             if (lis[1]==''):
                 self.code.append('call,'+str(lis[0]))

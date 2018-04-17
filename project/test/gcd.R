@@ -5,12 +5,7 @@ gcd <- function( a, b){
 	t = gcd( b , a % b)
 	return ( t )  
 }
-x = 100
-y = 7
+x = readline()
+y = readline()
 val = gcd(x, y)
-if(val > 1){
-	print(x)
-}
-else{
-	print(y)
-}
+print(val)
