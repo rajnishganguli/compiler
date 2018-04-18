@@ -1,5 +1,5 @@
 #!/bin/bash
-python src/parser.py $1 
+python src/parser.py $1 > ST.txt
 python src/codegen.py out.ir > out.s
 as --32 out.s -o out.o
 gcc -m32 out.o -o a.out

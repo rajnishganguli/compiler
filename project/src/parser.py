@@ -10,6 +10,8 @@ import TAC as tac
 import SymbolTable as st
 
 filename = sys.argv[1]
+global varinfo
+varinfo = {}
 
 def varType(var):
     try:
@@ -194,6 +196,8 @@ def p_M_12(p):
 
 def p_M_11(p):
     '''M_11 : '''
+    global varinfo
+    varinfo = dict(ST.vardict.items() + varinfo.items())
     indexoffuncdef = TAC.code.index('function,'+p[-8]["fname"])
     no_of_args = 0
     indices = [i for i, x in enumerate(TAC.code) if x == 'call,'+p[-8]["fname"]]
@@ -515,5 +519,7 @@ for line in myfile.readlines():
 TAC = tac.TAC()
 result = yacc.parse(pdata)
 myfile.close()
+varinfo = dict(ST.vardict.items() + varinfo.items())
+print varinfo
 if (TAC.error == False):
     TAC.printTAC()

@@ -2,6 +2,7 @@
 import sys
 import os
 import numpy as np
+import SymbolTable as st
 
 if len(sys.argv) == 2:
 	filename = str(sys.argv[1])
@@ -237,9 +238,9 @@ def prodAsm(instruction):
 				asmout = asmout + "movl $" + (operand2) + ", %edx \n"
 				asmout = asmout + "imul %edx \n"
 				setlocation(dest, '%eax')
-			# asmout = asmout + "movl %eax, " + dest + "\n"
-			# registerDescriptor['%eax'] = None
-			# addressDescriptor[dest] = 'mem'
+			asmout = asmout + "movl %eax, " + dest + "\n"
+			registerDescriptor['%eax'] = None
+			addressDescriptor[dest] = 'mem'
 			# for var in varlist:
 			# 	location = getlocation(var)
 			# 	if location != 'mem':
@@ -348,11 +349,12 @@ def prodAsm(instruction):
 			dest = instruction[2]
 			src = instruction[3]
 			location1 = getlocation(dest)
-			if integer(src):
-				if location1 == "mem":
-					asmout = asmout + "movl $" + src + ", " + dest + "\n"
-				else:
-					asmout = asmout + "movl $" + src + ", " + location1 + "\n"
+			if integer(src) or src.startswith('"'):
+				if integer(src):
+					if location1 == "mem":
+						asmout = asmout + "movl $" + src + ", " + dest + "\n"
+					else:
+						asmout = asmout + "movl $" + src + ", " + location1 + "\n"
 			else:
 				location2 = getlocation(src)
 				if location1 == "mem" and location2 == "mem":				
@@ -1521,20 +1523,24 @@ def prodAsm(instruction):
 			asmout = asmout + "movl $1, %eax \nmovl $0, %ebx \nint $0x80"	
 		elif operator == "print":
 			tobeprint = instruction[2]
-			if integer(tobeprint):
+			if(symbolTable[tobeprint][2]=='str'):
 				asmout = asmout + "pushl $"+ tobeprint +"\n"
-				asmout = asmout + "pushl $prtsrt \n"
 				asmout = asmout + "call printf \n"
-			else:	
-				location = getlocation(tobeprint)
-				if not location == "mem":
-					asmout = asmout + "pushl " + location + "\n"
-					asmout = asmout + "pushl $prtsrt\n"
-					asmout = asmout + "call printf\n"
-				else:
-					asmout = asmout + "pushl " + tobeprint + "\n"
-					asmout = asmout + "pushl $prtsrt\n"
-					asmout = asmout + "call printf\n"					
+			else:
+				if integer(tobeprint):
+					asmout = asmout + "pushl $"+ tobeprint +"\n"
+					asmout = asmout + "pushl $prtsrt \n"
+					asmout = asmout + "call printf \n"
+				else:	
+					location = getlocation(tobeprint)
+					if not location == "mem":
+						asmout = asmout + "pushl " + location + "\n"
+						asmout = asmout + "pushl $prtsrt\n"
+						asmout = asmout + "call printf\n"
+					else:
+						asmout = asmout + "pushl " + tobeprint + "\n"
+						asmout = asmout + "pushl $prtsrt\n"
+						asmout = asmout + "call printf\n"					
 		elif operator == "vector":
 			#lineNo,vector,vectorname,vectorlength
 			name = instruction[2]
@@ -1618,35 +1624,28 @@ for i in range(0,len(data)):
 		varlist = varlist + data[i]
 
 varlist = list(set(varlist))
-varlist = [x for x in varlist if not integer(x)]
+varlist = [x for x in varlist if not integer(x) and not x.startswith('"')]
 for word in operators:
 	if word in varlist:
 		varlist.remove(word)
 # print varlist
-
+st.vardict = eval(open('ST.txt', 'r').read())
+# print st.vardict
 addressDescriptor = addressDescriptor.fromkeys(varlist, "mem")
 symbolTable = addressDescriptor.fromkeys(varlist, ["live", None])
+
+for key,value in symbolTable.items():
+	vartype = st.vardict[key]['type']
+	value = value + [vartype]
+	symbolTable[key] = value
 
 leaders = [1,]
 for i in range(0,len(data)):
 	if data[i][1] == "ifgoto":
 		leaders.append(int(data[i][0])+1)
-		if(data[i][len(data[i])-1].startswith('l')):
-			for j in range(0,len(data)):
-				if data[i][len(data[i])-1] in data[j]:
-					leaders.append(int(data[j][0]))
-		else:
-			leaders.append(int(data[i][len(data[i])-1]))
 		
 	if data[i][1] == "goto":
 		leaders.append(int(data[i][0])+1)
-		if(data[i][len(data[i])-1].startswith('l')):
-			for j in range(0,len(data)):
-				if data[i][len(data[i])-1] in data[j]:
-					leaders.append(int(data[j][0]))
-		else:
-			leaders.append(int(data[i][len(data[i])-1]))
-		# leaders.append(int(data[i][len(data[i])-1]))
 	if data[i][1] == "label":
 		leaders.append(int(data[i][0]))	
 	if data[i][1] == "function":
@@ -1675,35 +1674,50 @@ for BasicBlock in BasicBlocks:
 			x = instr[3]
 			y = instr[4]
 			if z in variables:
-				symbolTable[z] = ["dead", None]
+				vartype = symbolTable[z][2]
+				symbolTable[z] = ["dead", None] + [vartype]
 			if x in variables:
-				symbolTable[x] = ["live", instrnumber]
+				vartype = symbolTable[x][2]
+				symbolTable[x] = ["live", instrnumber] + [vartype]
 			if y in variables:
-				symbolTable[y] = ["live", instrnumber]
+				vartype = symbolTable[y][2]
+				symbolTable[y] = ["live", instrnumber] + [vartype]
 		elif operator == "ifgoto":
 			x = instr[3]
 			y = instr[4]
 			if x in variables:
-				symbolTable[x] = ["live", instrnumber]
+				vartype = symbolTable[x][2]
+				symbolTable[x] = ["live", instrnumber] + [vartype]
 			if y in variables:
-				symbolTable[y] = ["live", instrnumber]
+				vartype = symbolTable[y][2]
+				symbolTable[y] = ["live", instrnumber] + [vartype]
 		elif operator == "print":
 			x = instr[2]
 			if x in variables:
-				symbolTable[x] = ["live", instrnumber]			
+				vartype = symbolTable[x][2]
+				symbolTable[x] = ["live", instrnumber] + [vartype]	
 		elif operator == "=":
 			x = instr[2]
 			y = instr[3]
 			if x in variables:
-				symbolTable[x] = ["dead", None]
+				vartype = symbolTable[x][2]
+				symbolTable[x] = ["dead", None] + [vartype]
 			if y in variables:
-				symbolTable[y] = ["live", instrnumber]
-
+				vartype = symbolTable[y][2]
+				symbolTable[y] = ["live", instrnumber] + [vartype]
 #-----------------------------------------------------------------------------------------------------------------------
 
 data_section = ".section .data\n"
 for var in varlist:
-	data_section = data_section + var + ":\t" + ".int 0\n"
+	if(symbolTable[var][2]=='str'):
+		src = ""
+		for i in range(len(data)):
+			if(data[i][2]==var):
+				src = data[i][3]
+				break
+		data_section = data_section + var + ":\t" + ".string "+src+"\n"
+	else:
+		data_section = data_section + var + ":\t" + ".int 0\n"
 data_section = data_section +'\n'
 
 text_section = ".section .text\n\n" + "inptstr: .asciz \"%d\" \n" + "prtsrt:  .asciz \"%d\\n\" \n.globl main\n\n" +  "main:\n"
