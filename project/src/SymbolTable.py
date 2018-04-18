@@ -1,11 +1,10 @@
-label_num = 0
+label_no = 0
+temp_no = 0
 class Symtable:
 
     def __init__(self, scope):
         self.vardict = {}
         self.funcdict = {}
-        self.temp_no = 0
-        self.label_no = 0
         if(scope == "local"):
             self.label_prefix = 'l_'
         else:
@@ -30,9 +29,10 @@ class Symtable:
         self.funcdict[func] = dic
 
     def newtemp(self, dic):
-        self.temp_no += 1
+        global temp_no
+        temp_no += 1
         dic["declare"] = True
-        temp_name = "temp"+str(self.temp_no)
+        temp_name = "temp"+str(temp_no)
         self.varinsert(temp_name, dic)
         return temp_name
 
@@ -40,8 +40,7 @@ class Symtable:
         self.vardict[var][key] = value
 
     def newlabel(self):
-        self.label_no += 1
-        global label_num
-        label_num += 1
-        label_name = self.label_prefix + "label" + str(label_num)
+        global label_no
+        label_no += 1
+        label_name = self.label_prefix + "label" + str(label_no)
         return label_name
