@@ -106,7 +106,7 @@ def p_for_range_variables(p):
                             | any_type'''
     if (isinstance(p[1],dict)):
         if(p[1]['type'] != 'int'):
-            print("range in for loop only accepts integer values")
+            print("ERROR: range in for loop only accepts integer values")
             TAC.error = True
         p[0] = p[1]['place']
     else:
@@ -172,11 +172,13 @@ def p_M_9(p):
     '''M_9 : '''
     vardict = globalST.varlookup(p[-1])
     if(vardict != False):
-        print ("Function Argument cannot be a declared same name as global variable")
+        print ('ERROR: Function Argument', p[-1],'cannot be a declared same name as global variable')
+        TAC.error = True
     ST.varinsert(p[-1], {"type":'int', "declare":True})
     global no_special_reg
     if(no_special_reg > 3):
-        print("no of arguments greater than 4")
+        print('ERROR: no of arguments greater than',' 4')
+        TAC.error = True
     no_special_reg += 1
 
 def p_M_10(p):
@@ -234,10 +236,10 @@ def p_M_14(p):
     '''M_14 : '''
     funcdict = globalST.funclookup(p[-4])
     if(funcdict==False):
-        print ('ERROR:',p[-4], 'not defined')
+        print ('ERROR: function with name',p[-4], 'is not defined')
         TAC.error = True
     elif(funcdict["num"]!=p[-2]):
-        print ('ERROR', 'Number of arguments passed mismatch in',p[-4])
+        print ('ERROR', 'Number of arguments passed mismatch in function',p[-4])
         TAC.error = True
 
 def p_arg_to_pass(p):
@@ -297,11 +299,17 @@ def p_comparison_statement(p):
                             | BR_LCIR if_cond BR_RCIR
                             | comparison_operand'''
     if(len(p)==2):
+        if(p[1]["type"] == "str"):
+                print("TYPE ERROR:", p[1]['value'], 'type "str" not supported.')
+                TAC.error = True
         p[0] = p[1]
     else:
         if p[1] == '(':
             p[0] = p[2]
         else:
+            if((p[3]["type"] != "num" and p[3]["type"] != "int") or (p[1]["type"] != "num" and p[1]["type"] != "int")):
+                print("TYPE ERROR:", p[1]['value'],'and',p[3]["value"], 'type not supported or not matching.')
+                TAC.error = True
             temp_name = ST.newtemp({"type" : p[3]["type"]})
             TAC.emit('Arithmetic',[p[2],temp_name, p[1]['place'], p[3]['place']])
             p[0] = {"place": temp_name, "type": p[3]["type"]}
@@ -319,7 +327,10 @@ def p_comparison_operand(p):
             if (var_dict == False):
                 print("ERROR: variable", p[1],'is not defined.')
                 TAC.error = True
-        p[0] = {"place": p[1], "type": var_dict["type"]}
+        if(var_dict):
+            p[0] = {"place": p[1], "type": var_dict["type"], 'value': p[1]}
+        else:
+            p[0] = {"place": p[1], "type": 'int', 'value': p[1]}
 
 def p_logop(p):
     '''logop    :   OP_LOGAND
@@ -418,13 +429,15 @@ def p_rightside(p):
     '''rightside    : leftside math rightside
                     | leftside logop rightside
                     | leftside bitop rightside
+                    | leftside compop rightside
                     | leftside
                     | function_call'''
     if(len(p)==2):
         p[0] = p[1]
     else:
-        if(p[3]["type"] != "num" and p[3]["type"] != "int"):
-            print("TYPE ERROR: variable", p[1]['place'],'and',p[3]["type"], 'not matching type.')
+        if(p[1]["type"] != "num" and p[1]["type"] != "int") or (p[3]["type"] != "num" and p[3]["type"] != "int"):
+            print("TYPE ERROR: variable", p[1]['value'],'and',p[3]['value'], 'type not matching.')
+            TAC.error = True
         temp_name = ST.newtemp({"type" : "num"})
         TAC.emit('Arithmetic',[p[2],temp_name,p[1]['place'],p[3]["place"]])
         p[0] = {"place": temp_name, "type": "num"}
@@ -454,7 +467,10 @@ def p_leftside(p):
                 if (var_dict == False):
                     print("ERROR: variable", p[1],'is not defined.')
                     TAC.error = True
-            p[0] = {"place": p[1], "type": var_dict["type"]}
+            if(var_dict):
+                p[0] = {"place": p[1], "type": var_dict["type"], 'value':p[1]}
+            else:
+                p[0] = {"place": p[1], "type": 'int', 'value':p[1]}
 
 def p_math(p):
     '''math : OP_PLUS
@@ -481,20 +497,19 @@ def p_any_type(p):
     else:
         if (varType(p[1])=='int'):
             temp_name = ST.newtemp({"type" : "int"})
-            p[0] = {"place": temp_name, "type": "int"}
+            p[0] = {"place": temp_name, "type": "int", 'value':p[1]}
             TAC.emit('Assignment',[temp_name, p[1]])
         elif (varType(p[1])=='num'):
             temp_name = ST.newtemp({"type" : "num"})
-            p[0] = {"place": temp_name, "type": "num"}
+            p[0] = {"place": temp_name, "type": "num", 'value':p[1]}
             TAC.emit('Assignment',[temp_name, p[1]])
         else:
             temp_name = ST.newtemp({"type" : "str"})
-            p[0] = {"place": temp_name, "type": "str"}
+            p[0] = {"place": temp_name, "type": "str",'value':p[1]}
             TAC.emit('Assignment',[temp_name, p[1]])
 
 def p_error(p):
-    print("Syntax error in input!")
-    print p.lineno
+    print('ERROR : Syntax error in input in line',p.lineno)
     TAC.error = True
 
 no_special_reg = 0

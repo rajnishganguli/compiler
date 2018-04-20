@@ -6,5 +6,7 @@ fact <- function( n ){
 	return (n * t )
 }
 
-res = fact( 13 )
-print(res)
+print("Enter Number: ")
+x = readline()
+print("Factorial: ")
+print(fact(x))

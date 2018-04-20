@@ -1,5 +1,15 @@
 #!/bin/bash
 python src/parser.py $1 > ST.txt
-python src/codegen.py out.ir > out.s
-as --32 out.s -o out.o
-gcc -m32 out.o -o a.out
+
+declare file="ST.txt"
+declare regex="ERROR"
+declare file_content=$( cat "${file}" )
+
+if [[ " $file_content " =~ $regex ]]
+    then
+        grep "ERROR" ST.txt | tr ':' ' '
+    else
+        python src/codegen.py out.ir > out.s
+		as --32 out.s -o out.o
+		gcc -m32 out.o -o a.out
+fi
